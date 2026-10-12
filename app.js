@@ -75,7 +75,7 @@ const row = (col, name, amt, sub) => '<div class="row"><i class="dot" style="bac
 const mrow = m => {
   const c = catBy(m.categoria);
   return '<button class="row" data-a="editMov" data-id="' + esc(m.id) + '"><i class="dot" style="background:' + c.colore + '"></i><span class="rt">' + esc(m.esercente || m.note || m.categoria) +
-    '<small>' + esc(m.categoria) + ' · ' + dShort(m.data) + (m.stato === UNCAT ? ' · da categorizzare' : '') + '</small></span><b>' + money(m.importo) + '</b></button>';
+    '<small>' + esc(m.categoria) + ' · ' + dShort(m.data) + (m.esercente && m.note && m.note !== m.esercente ? ' · ' + esc(m.note) : '') + (m.stato === UNCAT ? ' · da categorizzare' : '') + '</small></span><b>' + money(m.importo) + '</b></button>';
 };
 const seg = (items, cur, act, attr) => '<div class="seg">' + items.map(i => '<button class="' + (i[0] === cur ? 'on' : '') + '" data-a="' + act + '" data-' + attr + '="' + esc(i[0]) + '">' + esc(i[1]) + '</button>').join('') + '</div>';
 const sw = (id, on) => '<label class="sw" style="margin:0"><input type="checkbox" id="' + id + '"' + (on ? ' checked' : '') + '><span></span></label>';
@@ -92,18 +92,19 @@ function renderHome() {
   const pc = x => bud > 0 ? Math.min(x / bud * 100, 100) : 0;
   const yr = ym.slice(0, 4), ba = cfg('Budget annuale');
   const an = spese().filter(m => m.gruppo === 'Annuale' && m.data.slice(0, 4) === yr).reduce((a, m) => a + m.importo, 0);
-  const byCat = {};
-  ms.filter(m => m.gruppo === 'Variabile').forEach(m => { byCat[m.categoria] = (byCat[m.categoria] || 0) + m.importo; });
-  const top = Object.keys(byCat).map(k => [k, byCat[k]]).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const grp = g => { const o = {}; ms.filter(m => m.gruppo === g).forEach(m => { o[m.categoria] = (o[m.categoria] || 0) + m.importo; }); return Object.keys(o).map(k => [k, o[k]]).sort((a, b) => b[1] - a[1]); };
+  const catList = (arr, empty) => arr.length ? arr.map(t => row(catBy(t[0]).colore, esc(t[0]), money(t[1]))).join('') : '<p class="mut">' + empty + '</p>';
+  const pct = bud > 0 ? Math.round((fi + va) / bud * 100) : 0, pctA = ba > 0 ? Math.round(an / ba * 100) : 0;
   const recent = D().movimenti.slice().sort((a, b) => (b.data + b.creato).localeCompare(a.data + a.creato)).slice(0, 6);
   const unc = D().movimenti.filter(m => m.stato === UNCAT).length;
   const topbar = '<button class="ic" data-a="settings" aria-label="Impostazioni">' + I.set + '</button><div class="mnav"><button class="ic s" data-a="prevM" aria-label="Mese precedente">' + I.l + '</button><span>' + mLabel(ym).toUpperCase() + '</span><button class="ic s" data-a="nextM" aria-label="Mese successivo">' + I.r + '</button></div><button class="ic" data-a="refresh" aria-label="Aggiorna">' + I.ref + '</button>';
-  el.innerHTML = hd(topbar, 'Ancora disponibili', money(left), 'su ' + money(bud) + ' di budget mensile', left < 0 ? 'neg' : '') + sheet(
+  el.innerHTML = hd(topbar, 'Ancora disponibili', money(left), pct + '% del budget utilizzato · su ' + money(bud), left < 0 ? 'neg' : '') + sheet(
     card('<div class="bar"><i style="width:' + pc(fi) + '%;background:' + C.BL + '"></i><i style="width:' + pc(va) + '%;background:' + C.TL + '"></i></div>' +
       '<div class="leg"><span><span style="color:' + C.BL + '">●</span> Fisse ' + fmtN(fi) + '</span><span><span style="color:' + C.TL + '">●</span> Variabili ' + fmtN(va) + '</span><span>Budget ' + int.format(bud) + '</span></div>') +
-    card('<div class="r2"><span>Spese annuali ' + yr + '</span><span>' + money(an) + ' / ' + money(ba) + '</span></div><div class="bar thin"><i style="width:' + (ba > 0 ? Math.min(an / ba * 100, 100) : 0) + '%;background:' + C.PU + '"></i></div><span class="mut">' + (ba - an >= 0 ? 'Restano ' + money(ba - an) : 'Oltre il budget di ' + money(an - ba)) + '</span>') +
+    card('<div class="r2"><span>Spese annuali ' + yr + '</span><span>' + money(an) + ' / ' + money(ba) + '</span></div><div class="bar thin"><i style="width:' + (ba > 0 ? Math.min(an / ba * 100, 100) : 0) + '%;background:' + C.PU + '"></i></div><span class="mut">' + (ba - an >= 0 ? 'Restano ' + money(ba - an) : 'Oltre il budget di ' + money(an - ba)) + ' · utilizzato ' + pctA + '%</span>') +
     (unc ? '<button class="banner" data-a="listUncat">' + unc + (unc === 1 ? ' pagamento da categorizzare' : ' pagamenti da categorizzare') + ' ›</button>' : '') +
-    '<h3>Variabili per categoria</h3>' + (top.length ? top.map(t => row(catBy(t[0]).colore, esc(t[0]), money(t[1]))).join('') : '<p class="mut">Nessuna spesa variabile in questo mese.</p>') +
+    '<div class="rowhead"><h3>Spese fisse</h3><b>' + money(fi) + '</b></div>' + catList(grp('Fissa'), 'Nessuna spesa fissa in questo mese.') +
+    '<div class="rowhead"><h3>Variabili per categoria</h3><b>' + money(va) + '</b></div>' + catList(grp('Variabile'), 'Nessuna spesa variabile in questo mese.') +
     '<div class="rowhead"><h3>Ultimi movimenti</h3><button class="link" data-a="listAll">Vedi tutti</button></div>' +
     (recent.length ? recent.map(mrow).join('') : '<p class="mut">Ancora nessun movimento.</p>'));
 }
@@ -231,7 +232,7 @@ function openNew() {
   openModal(hd('<button class="ic" data-a="closeModal" aria-label="Chiudi">' + I.l + '</button><div class="ttl">NUOVA SPESA</div><span class="sp"></span>', 'Importo (€)', '<input id="n-imp" class="amt" inputmode="decimal" placeholder="0,00" autocomplete="off">', '') +
     sheet(seg([['Variabile', 'Variabile'], ['Fissa', 'Fissa'], ['Annuale', 'Annuale']], 'Variabile', 'setGroup', 'g') +
       '<div class="chips" id="n-chips">' + chipsFor('Variabile') + '</div>' +
-      '<label for="n-txt">Esercente / nota</label><input id="n-txt" autocomplete="off"><label for="n-dt">Data</label><input id="n-dt" type="date" value="' + today() + '">' +
+      '<label for="n-es">Esercente</label><input id="n-es" placeholder="es. Pizzeria Alla Brace" autocomplete="off"><label for="n-nt">Nota</label><input id="n-nt" placeholder="es. cena" autocomplete="off"><label for="n-dt">Data</label><input id="n-dt" type="date" value="' + today() + '">' +
       '<div class="frow" style="margin-top:12px"><span>Salva posizione</span>' + sw('n-loc', false) + '</div><div class="frow"><span>Pagamento online</span>' + sw('n-onl', false) + '</div>' +
       '<button class="btn" data-a="saveNew">Salva spesa</button>'), 'full');
 }
@@ -243,12 +244,12 @@ async function saveNew(btn) {
   const imp = parseNum(val('n-imp'));
   if (!(imp > 0)) return toast('Inserisci un importo');
   if (!NM.cat) return toast('Scegli una categoria');
-  const txt = val('n-txt'), online = $('#n-onl').checked, loc = $('#n-loc').checked && !online;
+  const es = val('n-es'), nt = val('n-nt'), online = $('#n-onl').checked, loc = $('#n-loc').checked && !online;
   btn.disabled = true; btn.textContent = 'Salvo…';
   let lat, lng;
   if (loc) { try { const p = await getPos(); lat = p.latitude; lng = p.longitude; } catch (e) { toast('Posizione non disponibile: salvo senza'); } }
   try {
-    await api('addMovimento', { mov: { data: val('n-dt') || today(), importo: imp, categoria: NM.cat, esercente: txt, note: txt, origine: 'Manuale', lat: lat, lng: lng, online: online } });
+    await api('addMovimento', { mov: { data: val('n-dt') || today(), importo: imp, categoria: NM.cat, esercente: es, note: nt, origine: 'Manuale', lat: lat, lng: lng, online: online } });
     closeModal(); toast('Spesa salvata'); await load(true);
   } catch (e) { toast(e.message); btn.disabled = false; btn.textContent = 'Salva spesa'; }
 }
@@ -298,6 +299,8 @@ function openSettings() {
   openModal('<div class="mh"><span>Impostazioni</span><button class="ic d" data-a="closeModal" aria-label="Chiudi">' + I.x + '</button></div>' +
     '<label for="s-url">URL dello script (finisce con /exec)</label><input id="s-url" type="url" autocapitalize="off" autocorrect="off" value="' + esc(localStorage.getItem(LS.url) || '') + '">' +
     '<label for="s-key">Chiave segreta</label><input id="s-key" type="password" autocapitalize="off" autocorrect="off" value="' + esc(localStorage.getItem(LS.key) || '') + '">' +
+    '<h4>Mappa</h4><label>Stile</label>' + seg(Object.keys(MAPSTYLES).map(k => [k, MAPSTYLES[k].n]), mapPref().style, 'mapStyle', 'v') +
+    '<div class="frow"><span>Raggruppa i pallini vicini</span>' + sw('m-cl', mapPref().cluster) + '</div>' +
     (cf ? '<h4>Budget e obiettivi</h4>' + CFG_KEYS.map((k, i) => '<label for="c' + i + '">' + k + ' (€)</label><input id="c' + i + '" data-p="' + k + '" inputmode="decimal" value="' + dec(cf[k] == null ? '' : cf[k]) + '">').join('') +
       '<h4>Nuova regola esercente</h4><label for="rg-p">Quando l’esercente contiene</label><input id="rg-p" autocapitalize="off"><label for="rg-c">Categoria</label><select id="rg-c">' +
       D().categorie.filter(c => c.attiva && c.nome !== UNCAT).map(c => '<option>' + esc(c.nome) + '</option>').join('') + '</select><label for="rg-n">Nota (facoltativa)</label><input id="rg-n"><div class="frow" style="margin-top:8px"><span>Esercente online</span>' + sw('rg-o', false) + '</div><button class="btn ghost" data-a="saveRule">Aggiungi regola</button><p class="mut">Regole attive: ' + (D().regole.length ? D().regole.map(r => esc(r.parola) + ' → ' + esc(r.categoria)).join(' · ') : 'nessuna') + '</p>' : '') +
@@ -333,12 +336,25 @@ function logout() {
 }
 
 /* ===================== MAPPA ===================== */
-let MAP = null, GROUP = null;
+const MAPSTYLES = {
+  chiaro: { n: 'Chiara', u: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', a: '&copy; OpenStreetMap contributors &copy; CARTO', s: 'abcd' },
+  standard: { n: 'Standard', u: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', a: '&copy; OpenStreetMap contributors', s: 'abc' },
+  scuro: { n: 'Scura', u: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', a: '&copy; OpenStreetMap contributors &copy; CARTO', s: 'abcd' }
+};
+const mapPref = () => ({ style: localStorage.getItem('fin_mstyle') || 'chiaro', cluster: localStorage.getItem('fin_mcluster') !== '0' });
+let MAP = null, GROUP = null, TILE = null, lastCard = 0;
+function applyTiles() {
+  if (!MAP) return;
+  if (TILE) MAP.removeLayer(TILE);
+  const st = MAPSTYLES[mapPref().style] || MAPSTYLES.chiaro;
+  TILE = L.tileLayer(st.u, { maxZoom: 19, subdomains: st.s, attribution: st.a }).addTo(MAP);
+  if (TILE.bringToBack) TILE.bringToBack();
+}
 function initMap() {
   if (MAP || !window.L) return;
   MAP = L.map('map', { zoomControl: false }).setView([41.9, 12.5], 6);
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(MAP);
-  MAP.on('click', hideCard);
+  applyTiles();
+  MAP.on('click', () => { if (Date.now() - lastCard > 500) hideCard(); });
 }
 function inPeriod(m) {
   const now = today().slice(0, 7);
@@ -350,7 +366,8 @@ function inPeriod(m) {
 function hideCard() { const c = $('#mapcard'); if (c) c.hidden = true; }
 function showCard(m) {
   const c = $('#mapcard'), cat = catBy(m.categoria);
-  c.innerHTML = '<div class="r2" style="font-size:18px;font-family:\'Chakra Petch\',sans-serif"><span>' + esc(m.esercente || m.note || m.categoria) + '</span><span>' + money(m.importo) + '</span></div><small>' + esc(m.categoria) + ' · ' + dFull(m.data) + ' · ' + esc(m.origine || '') + '</small>' +
+  c.innerHTML = '<div class="r2" style="font-size:18px;font-family:\'Chakra Petch\',sans-serif"><span>' + esc(m.esercente || m.note || m.categoria) + '</span><span>' + money(m.importo) + '</span></div><small><span style="color:' + cat.colore + '">●</span> ' + esc(m.categoria) + ' · ' + dFull(m.data) + ' · ' + esc(m.origine || '') + '</small>' +
+    (m.note && m.note !== m.esercente ? '<small>Nota: ' + esc(m.note) + '</small>' : '') +
     '<div class="btns"><button class="btn" data-a="mapEdit" data-id="' + esc(m.id) + '">Modifica</button><button class="btn ghost" data-a="mapClose">Chiudi</button></div>';
   c.hidden = false;
 }
@@ -366,11 +383,13 @@ function drawMap(fit) {
     (S.mp === 'range' ? '<div class="crow"><input type="date" id="m-from" aria-label="Dal" value="' + esc(S.mfrom) + '"><input type="date" id="m-to" aria-label="Al" value="' + esc(S.mto) + '"></div>' : '') +
     '<div class="crow"><button class="chip ' + (S.mcat === '' ? 'on' : '') + '" data-a="mapCat" data-c="">Tutte</button>' + cats.map(c => '<button class="chip ' + (S.mcat === c ? 'on' : '') + '" data-a="mapCat" data-c="' + esc(c) + '">' + esc(c) + '</button>').join('') + '</div>';
   if (GROUP) MAP.removeLayer(GROUP);
-  GROUP = L.markerClusterGroup({ showCoverageOnHover: false, iconCreateFunction: c => L.divIcon({ html: '<div class="cl">' + c.getChildCount() + '</div>', className: '', iconSize: [38, 38] }) });
+  GROUP = mapPref().cluster
+    ? L.markerClusterGroup({ showCoverageOnHover: false, iconCreateFunction: c => L.divIcon({ html: '<div class="cl">' + c.getChildCount() + '</div>', className: '', iconSize: [38, 38] }) })
+    : L.featureGroup();
   const pts = geo.filter(m => inPeriod(m) && (!S.mcat || m.categoria === S.mcat));
   pts.forEach(m => {
-    const k = L.circleMarker([m.lat, m.lng], { radius: 9, color: '#fff', weight: 2.5, fillColor: catBy(m.categoria).colore, fillOpacity: 1 });
-    k.on('click', () => showCard(m)); GROUP.addLayer(k);
+    const k = L.circleMarker([m.lat, m.lng], { radius: 11, color: '#fff', weight: 2.5, fillColor: catBy(m.categoria).colore, fillOpacity: 1, bubblingMouseEvents: false });
+    k.on('click', () => { lastCard = Date.now(); showCard(m); }); GROUP.addLayer(k);
   });
   MAP.addLayer(GROUP);
   if (fit && pts.length) MAP.fitBounds(GROUP.getBounds().pad(0.2), { maxZoom: 16 });
@@ -406,6 +425,7 @@ const A = {
   setScope(b) { RS.scope = b.dataset.s; b.parentNode.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); },
   saveRic(b) { saveRic(b, b.dataset.id); }, endRic(b) { endRic(b.dataset.id); },
   saveSet(b) { saveSet(b); }, saveRule(b) { saveRule(b); }, logout: logout,
+  mapStyle(b) { localStorage.setItem('fin_mstyle', b.dataset.v); b.parentNode.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); applyTiles(); },
   mapPer(b) { S.mp = b.dataset.p; drawMap(true); }, mapCat(b) { S.mcat = b.dataset.c; drawMap(true); }
 };
 document.addEventListener('click', e => {
@@ -416,6 +436,7 @@ document.addEventListener('click', e => {
 document.addEventListener('change', e => {
   if (e.target.id === 'm-from') { S.mfrom = e.target.value; drawMap(true); }
   if (e.target.id === 'm-to') { S.mto = e.target.value; drawMap(true); }
+  if (e.target.id === 'm-cl') { localStorage.setItem('fin_mcluster', e.target.checked ? '1' : '0'); if (MAP) drawMap(false); }
 });
 document.addEventListener('visibilitychange', () => { if (!document.hidden && localStorage.getItem(LS.key) && Date.now() - S.last > 60000) load(true); });
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
