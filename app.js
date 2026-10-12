@@ -263,7 +263,8 @@ function openEdit(id) {
     '<label for="e-imp">Importo (€)</label><input id="e-imp" inputmode="decimal" value="' + dec(m.importo) + '"><label for="e-cat">Categoria</label><select id="e-cat">' + opts + '</select>' +
     '<label for="e-es">Esercente</label><input id="e-es" value="' + esc(m.esercente) + '"><label for="e-nt">Nota</label><input id="e-nt" value="' + esc(m.note) + '"><label for="e-dt">Data</label><input id="e-dt" type="date" value="' + esc(m.data) + '">' +
     (unc ? '<div class="frow" style="margin-top:12px"><span>Ricorda questo esercente</span>' + sw('e-rule', true) + '</div><label for="e-kw">Quando l’esercente contiene</label><input id="e-kw" value="' + esc((m.esercente || '').toLowerCase()) + '">' : '') +
-    '<p class="mut">' + esc(m.origine || '') + (m.online ? ' · online' : '') + (m.lat != null ? ' · con posizione' : '') + '</p>' +
+    '<div class="frow" style="margin-top:12px"><span>Pagamento online (senza posizione)</span>' + sw('e-onl', m.online) + '</div>' +
+    '<p class="mut">' + esc(m.origine || '') + (m.lat != null ? ' · con posizione' : '') + '</p>' +
     '<button class="btn" data-a="saveEdit" data-id="' + esc(id) + '">Salva</button><button class="btn warn" data-a="delMov" data-id="' + esc(id) + '">Elimina movimento</button>', 'tall');
 }
 async function saveEdit(btn, id) {
@@ -276,11 +277,13 @@ async function saveEdit(btn, id) {
   const es = val('e-es'), nt = val('e-nt');
   if (es !== (m.esercente || '')) ch.esercente = es;
   if (nt !== (m.note || '')) ch.note = nt;
+  const onl = $('#e-onl').checked;
+  if (onl !== m.online) { ch.online = onl; if (onl) { ch.lat = ''; ch.lng = ''; } }
   btn.disabled = true; btn.textContent = 'Salvo…';
   try {
     if (Object.keys(ch).length) await api('updateMovimento', { id: id, changes: ch });
     const ru = document.getElementById('e-rule'), kw = val('e-kw');
-    if (ru && ru.checked && ch.categoria && kw) await api('saveRegola', { regola: { parola: kw, categoria: cat, nota: nt || es, online: m.online } });
+    if (ru && ru.checked && ch.categoria && kw) await api('saveRegola', { regola: { parola: kw, categoria: cat, nota: nt || es, online: onl } });
     closeModal(); toast('Modifiche salvate'); await load(true);
   } catch (e) { toast(e.message); btn.disabled = false; btn.textContent = 'Salva'; }
 }
