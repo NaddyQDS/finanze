@@ -294,13 +294,22 @@ async function delMov(id) {
 }
 
 /* ----- impostazioni ----- */
-function diag() {
+function insets() {
   const p = document.createElement('div');
   p.style.cssText = 'position:absolute;visibility:hidden;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)';
   document.body.appendChild(p);
-  const cs = getComputedStyle(p), t = cs.paddingTop, b = cs.paddingBottom;
+  const cs = getComputedStyle(p), r = { t: parseFloat(cs.paddingTop) || 0, b: parseFloat(cs.paddingBottom) || 0 };
   document.body.removeChild(p);
-  return 'Schermo ' + window.innerWidth + '×' + window.innerHeight + ' (dispositivo ' + screen.width + '×' + screen.height + ') · margini sicuri alto ' + t + ' basso ' + b + ' · ' + (navigator.standalone ? 'app installata' : 'Safari') + ' · v4';
+  return r;
+}
+function fitViewport() {
+  const t = insets().t, gap = Math.max(0, screen.height - window.innerHeight);
+  document.documentElement.classList.toggle('gap', !!navigator.standalone && t > 0 && gap >= t - 2);
+}
+function diag() {
+  const i = insets();
+  return 'Schermo ' + window.innerWidth + '×' + window.innerHeight + ' (dispositivo ' + screen.width + '×' + screen.height + ') · margini sicuri alto ' + i.t + 'px basso ' + i.b + 'px · ' +
+    (navigator.standalone ? 'app installata' : 'Safari') + (document.documentElement.classList.contains('gap') ? ' · fascia in basso attiva' : '') + ' · v5';
 }
 function openSettings() {
   const cf = D() ? (D().config || {}) : null;
@@ -454,5 +463,6 @@ document.addEventListener('change', e => {
 document.addEventListener('visibilitychange', () => { if (!document.hidden && localStorage.getItem(LS.key) && Date.now() - S.last > 60000) load(true); });
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 
+fitViewport(); window.addEventListener('resize', fitViewport);
 render();
 if (localStorage.getItem(LS.url) && localStorage.getItem(LS.key)) load(true); else openSettings();
