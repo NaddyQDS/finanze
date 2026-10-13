@@ -294,6 +294,14 @@ async function delMov(id) {
 }
 
 /* ----- impostazioni ----- */
+function diag() {
+  const p = document.createElement('div');
+  p.style.cssText = 'position:absolute;visibility:hidden;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)';
+  document.body.appendChild(p);
+  const cs = getComputedStyle(p), t = cs.paddingTop, b = cs.paddingBottom;
+  document.body.removeChild(p);
+  return 'Schermo ' + window.innerWidth + '×' + window.innerHeight + ' (dispositivo ' + screen.width + '×' + screen.height + ') · margini sicuri alto ' + t + ' basso ' + b + ' · app v3';
+}
 function openSettings() {
   const cf = D() ? (D().config || {}) : null;
   openModal('<div class="mh"><span>Impostazioni</span><button class="ic d" data-a="closeModal" aria-label="Chiudi">' + I.x + '</button></div>' +
@@ -304,7 +312,7 @@ function openSettings() {
     (cf ? '<h4>Budget e obiettivi</h4>' + CFG_KEYS.map((k, i) => '<label for="c' + i + '">' + k + ' (€)</label><input id="c' + i + '" data-p="' + k + '" inputmode="decimal" value="' + dec(cf[k] == null ? '' : cf[k]) + '">').join('') +
       '<h4>Nuova regola esercente</h4><label for="rg-p">Quando l’esercente contiene</label><input id="rg-p" autocapitalize="off"><label for="rg-c">Categoria</label><select id="rg-c">' +
       D().categorie.filter(c => c.attiva && c.nome !== UNCAT).map(c => '<option>' + esc(c.nome) + '</option>').join('') + '</select><label for="rg-n">Nota (facoltativa)</label><input id="rg-n"><div class="frow" style="margin-top:8px"><span>Esercente online</span>' + sw('rg-o', false) + '</div><button class="btn ghost" data-a="saveRule">Aggiungi regola</button><p class="mut">Regole attive: ' + (D().regole.length ? D().regole.map(r => esc(r.parola) + ' → ' + esc(r.categoria)).join(' · ') : 'nessuna') + '</p>' : '') +
-    '<button class="btn" data-a="saveSet">Salva</button><button class="btn warn" data-a="logout">Disconnetti questo iPhone</button>', 'tall');
+    '<button class="btn" data-a="saveSet">Salva</button><button class="btn warn" data-a="logout">Disconnetti questo iPhone</button><p class="mut" style="font-size:11px">' + diag() + '</p>', 'tall');
 }
 async function saveSet(btn) {
   const url = val('s-url'), key = val('s-key');
@@ -337,7 +345,8 @@ function logout() {
 
 /* ===================== MAPPA ===================== */
 const OSM = { u: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', a: '&copy; OpenStreetMap contributors' };
-const MAPSTYLES = { chiaro: { n: 'Chiara' }, standard: { n: 'Standard' }, scuro: { n: 'Scura' } };
+const MAPSTYLES = { chiaro: { n: 'Minimal', u: 'https://tiles.openfreemap.org/styles/positron' }, standard: { n: 'Dettagliata', u: 'https://tiles.openfreemap.org/styles/liberty' }, scuro: { n: 'Scura', u: 'https://tiles.openfreemap.org/styles/dark' } };
+const OFM_ATTR = '<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> &copy; <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> Data from <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
 const mapPref = () => ({ style: localStorage.getItem('fin_mstyle') || 'chiaro', cluster: localStorage.getItem('fin_mcluster') !== '0' });
 let MAP = null, GROUP = null, TILE = null, lastCard = 0;
 function applyTiles() {
@@ -346,6 +355,11 @@ function applyTiles() {
   const k = MAPSTYLES[mapPref().style] ? mapPref().style : 'chiaro', el = MAP.getContainer();
   Object.keys(MAPSTYLES).forEach(x => el.classList.remove('st-' + x));
   el.classList.add('st-' + k);
+  el.classList.remove('fb');
+  if (L.maplibreGL && window.maplibregl) {
+    try { TILE = L.maplibreGL({ style: MAPSTYLES[k].u, attribution: OFM_ATTR }).addTo(MAP); return; } catch (e) { TILE = null; }
+  }
+  el.classList.add('fb'); // ripiego: tasselli OpenStreetMap con filtro CSS
   TILE = L.tileLayer(OSM.u, { maxZoom: 19, attribution: OSM.a }).addTo(MAP);
   if (TILE.bringToBack) TILE.bringToBack();
 }

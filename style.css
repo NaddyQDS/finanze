@@ -18,7 +18,7 @@ button{border:0;background:none;padding:0;cursor:pointer}
 .big{position:relative;z-index:1;font:700 38px/1.15 'Chakra Petch',sans-serif}
 .big.neg{color:#FF9DB5}
 .sb{position:relative;z-index:1;font-size:12px;color:var(--li);min-height:15px}
-.sheet{flex:1;min-height:0;overflow-y:auto;margin-top:-28px;position:relative;z-index:2;background:#fff;border-radius:32px 32px 0 0;padding:20px 20px calc(110px + var(--sa-b))}
+.sheet{flex:1;min-height:0;overflow-y:auto;margin-top:-28px;position:relative;z-index:2;background:#fff;border-radius:32px 32px 0 0;padding:20px 20px calc(96px + var(--sa-b))}
 .card{background:var(--cd);border-radius:18px;padding:16px;margin-bottom:12px}
 .r2{display:flex;justify-content:space-between;font-size:14px;font-weight:700;gap:8px}
 .bar{display:flex;height:10px;border-radius:5px;overflow:hidden;background:#DADDF0;margin:10px 0 8px}
@@ -54,8 +54,8 @@ input,select{width:100%;height:48px;border-radius:14px;border:1.5px solid var(--
 .rec{display:flex;align-items:center;justify-content:space-between;width:100%;text-align:left;background:var(--cd);border-radius:16px;padding:14px 16px;margin-bottom:10px;font-weight:700;font-size:15px}
 .rec b{font:700 17px 'Chakra Petch',sans-serif}
 .pos{color:#118A6E}.neg{color:#D6336C}
-#tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;height:calc(88px + var(--sa-b));padding:0 10px var(--sa-b);display:flex;align-items:flex-start;background:#E8F4F0;border-radius:28px 28px 0 0;box-shadow:0 -4px 16px rgba(25,28,107,.12)}
-#tabs button{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding-top:12px;color:var(--mu);font-size:11px;font-weight:600}
+#tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;padding:0 10px var(--sa-b);display:flex;align-items:flex-start;background:#E8F4F0;border-radius:28px 28px 0 0;box-shadow:0 -4px 16px rgba(25,28,107,.12)}
+#tabs button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0 8px;color:var(--mu);font-size:11px;font-weight:600}
 #tabs button.on{color:var(--nv)}
 #tabs svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 #tabs .plus{flex:none;width:60px;height:60px;border-radius:30px;background:var(--tl);color:#fff;margin:-26px 6px 0;padding:0;justify-content:center;box-shadow:0 0 0 7px #fff,0 6px 14px rgba(43,191,157,.45)}
@@ -75,13 +75,13 @@ h4{margin:20px 0 4px;font:700 15px 'Chakra Petch',sans-serif}
 .crow .chip{flex:none;background:#fff;box-shadow:0 2px 8px rgba(25,28,107,.18)}
 .crow .chip.on{background:var(--nv);color:#fff}
 .crow input{flex:1;min-width:0;background:#fff;box-shadow:0 2px 8px rgba(25,28,107,.18)}
-.mapcard{position:absolute;left:12px;right:12px;bottom:calc(124px + var(--sa-b));z-index:600;background:#fff;border-radius:22px;padding:16px;box-shadow:0 6px 24px rgba(25,28,107,.25)}
+.mapcard{position:absolute;left:12px;right:12px;bottom:calc(92px + var(--sa-b));z-index:600;background:#fff;border-radius:22px;padding:16px;box-shadow:0 6px 24px rgba(25,28,107,.25)}
 .mapcard[hidden]{display:none}
 .mapcard .btns{display:flex;gap:8px}.mapcard .btn{margin-top:12px;height:44px}
 .cl{width:38px;height:38px;border-radius:50%;background:var(--nv);color:#fff;border:2.5px solid #fff;display:flex;align-items:center;justify-content:center;font:700 14px 'Chakra Petch',sans-serif}
-#toast{position:fixed;left:50%;bottom:calc(110px + var(--sa-b));transform:translateX(-50%);z-index:80;background:var(--nv);color:#fff;padding:12px 18px;border-radius:22px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .25s;max-width:88%;text-align:center}
+#toast{position:fixed;left:50%;bottom:calc(96px + var(--sa-b));transform:translateX(-50%);z-index:80;background:var(--nv);color:#fff;padding:12px 18px;border-radius:22px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .25s;max-width:88%;text-align:center}
 #toast.on{opacity:1}
 
-#map.st-chiaro .leaflet-tile-pane{filter:grayscale(.35) saturate(.8) brightness(1.05) contrast(.94)}
-#map.st-scuro{background:#1b1d2b}
-#map.st-scuro .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.95) contrast(.9) saturate(.6)}
+#map.fb.st-chiaro .leaflet-tile-pane{filter:grayscale(.35) saturate(.8) brightness(1.05) contrast(.94)}
+#map.st-scuro{background:#16181f}
+#map.fb.st-scuro .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.95) contrast(.9) saturate(.6)}
