@@ -103,8 +103,8 @@ function renderHome() {
       '<div class="leg"><span><span style="color:' + C.BL + '">●</span> Fisse ' + fmtN(fi) + '</span><span><span style="color:' + C.TL + '">●</span> Variabili ' + fmtN(va) + '</span><span>Budget ' + int.format(bud) + '</span></div>') +
     card('<div class="r2"><span>Spese annuali ' + yr + '</span><span>' + money(an) + ' / ' + money(ba) + '</span></div><div class="bar thin"><i style="width:' + (ba > 0 ? Math.min(an / ba * 100, 100) : 0) + '%;background:' + C.PU + '"></i></div><span class="mut">' + (ba - an >= 0 ? 'Restano ' + money(ba - an) : 'Oltre il budget di ' + money(an - ba)) + ' · utilizzato ' + pctA + '%</span>') +
     (unc ? '<button class="banner" data-a="listUncat">' + unc + (unc === 1 ? ' pagamento da categorizzare' : ' pagamenti da categorizzare') + ' ›</button>' : '') +
-    '<div class="rowhead"><h3>Spese fisse</h3><b>' + money(fi) + '</b></div>' + catList(grp('Fissa'), 'Nessuna spesa fissa in questo mese.') +
     '<div class="rowhead"><h3>Variabili per categoria</h3><b>' + money(va) + '</b></div>' + catList(grp('Variabile'), 'Nessuna spesa variabile in questo mese.') +
+    '<div class="rowhead"><h3>Spese fisse</h3><b>' + money(fi) + '</b></div>' + catList(grp('Fissa'), 'Nessuna spesa fissa in questo mese.') +
     '<div class="rowhead"><h3>Ultimi movimenti</h3><button class="link" data-a="listAll">Vedi tutti</button></div>' +
     (recent.length ? recent.map(mrow).join('') : '<p class="mut">Ancora nessun movimento.</p>'));
 }
@@ -336,18 +336,17 @@ function logout() {
 }
 
 /* ===================== MAPPA ===================== */
-const MAPSTYLES = {
-  chiaro: { n: 'Chiara', u: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', a: '&copy; OpenStreetMap contributors &copy; CARTO', s: 'abcd' },
-  standard: { n: 'Standard', u: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', a: '&copy; OpenStreetMap contributors', s: 'abc' },
-  scuro: { n: 'Scura', u: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', a: '&copy; OpenStreetMap contributors &copy; CARTO', s: 'abcd' }
-};
+const OSM = { u: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', a: '&copy; OpenStreetMap contributors' };
+const MAPSTYLES = { chiaro: { n: 'Chiara' }, standard: { n: 'Standard' }, scuro: { n: 'Scura' } };
 const mapPref = () => ({ style: localStorage.getItem('fin_mstyle') || 'chiaro', cluster: localStorage.getItem('fin_mcluster') !== '0' });
 let MAP = null, GROUP = null, TILE = null, lastCard = 0;
 function applyTiles() {
   if (!MAP) return;
   if (TILE) MAP.removeLayer(TILE);
-  const st = MAPSTYLES[mapPref().style] || MAPSTYLES.chiaro;
-  TILE = L.tileLayer(st.u, { maxZoom: 19, subdomains: st.s, attribution: st.a }).addTo(MAP);
+  const k = MAPSTYLES[mapPref().style] ? mapPref().style : 'chiaro', el = MAP.getContainer();
+  Object.keys(MAPSTYLES).forEach(x => el.classList.remove('st-' + x));
+  el.classList.add('st-' + k);
+  TILE = L.tileLayer(OSM.u, { maxZoom: 19, attribution: OSM.a }).addTo(MAP);
   if (TILE.bringToBack) TILE.bringToBack();
 }
 function initMap() {
