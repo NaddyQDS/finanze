@@ -1,6 +1,6 @@
 :root{--nv:#191C6B;--tl:#2BBF9D;--bl:#5B72C2;--pu:#9A3AF2;--lv:#E9EAF4;--cd:#F4F5FB;--tx:#0B0D2B;--mu:#646987;--ln:#ECEDF5;--li:#A9AEF0;--ramp:0px;--sa-t:env(safe-area-inset-top,0px);--sa-b:env(safe-area-inset-bottom,0px)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html{background:linear-gradient(#191C6B 50%,#E8F4F0 50%)}
+html{background:#E8F4F0}
 html,body{height:100%;margin:0;overflow:hidden;color:var(--tx);font-family:Manrope,system-ui,-apple-system,sans-serif}
 button,input,select{font-family:inherit;color:inherit;font-size:16px}
 button{border:0;background:none;padding:0;cursor:pointer}

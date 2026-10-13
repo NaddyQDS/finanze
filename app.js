@@ -306,10 +306,17 @@ function fitViewport() {
   const t = insets().t, gap = Math.max(0, screen.height - window.innerHeight);
   document.documentElement.classList.toggle('gap', !!navigator.standalone && t > 0 && gap >= t - 2);
 }
+function vh(u) {
+  const d = document.createElement('div');
+  d.style.cssText = 'position:absolute;visibility:hidden;height:' + u;
+  document.body.appendChild(d); const h = d.offsetHeight; document.body.removeChild(d); return h;
+}
 function diag() {
-  const i = insets();
+  fitViewport();
+  const i = insets(), vv = window.visualViewport ? Math.round(window.visualViewport.height) : '-';
   return 'Schermo ' + window.innerWidth + '×' + window.innerHeight + ' (dispositivo ' + screen.width + '×' + screen.height + ') · margini sicuri alto ' + i.t + 'px basso ' + i.b + 'px · ' +
-    (navigator.standalone ? 'app installata' : 'Safari') + (document.documentElement.classList.contains('gap') ? ' · fascia in basso attiva' : '') + ' · v5';
+    (navigator.standalone ? 'app installata' : 'Safari') + (document.documentElement.classList.contains('gap') ? ' · fascia in basso attiva' : ' · fascia in basso non attiva') +
+    ' · vh ' + vh('100vh') + '/' + vh('100lvh') + '/' + vh('100dvh') + ' · vv ' + vv + ' · v6';
 }
 function openSettings() {
   const cf = D() ? (D().config || {}) : null;
@@ -460,9 +467,12 @@ document.addEventListener('change', e => {
   if (e.target.id === 'm-to') { S.mto = e.target.value; drawMap(true); }
   if (e.target.id === 'm-cl') { localStorage.setItem('fin_mcluster', e.target.checked ? '1' : '0'); if (MAP) drawMap(false); }
 });
-document.addEventListener('visibilitychange', () => { if (!document.hidden && localStorage.getItem(LS.key) && Date.now() - S.last > 60000) load(true); });
+document.addEventListener('visibilitychange', () => { fitViewport(); if (!document.hidden && localStorage.getItem(LS.key) && Date.now() - S.last > 60000) load(true); });
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 
-fitViewport(); window.addEventListener('resize', fitViewport);
+fitViewport();
+['resize', 'orientationchange', 'pageshow', 'load'].forEach(ev => window.addEventListener(ev, fitViewport));
+if (window.visualViewport) window.visualViewport.addEventListener('resize', fitViewport);
+[200, 800, 2000].forEach(ms => setTimeout(fitViewport, ms));
 render();
 if (localStorage.getItem(LS.url) && localStorage.getItem(LS.key)) load(true); else openSettings();
