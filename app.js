@@ -300,7 +300,7 @@ function diag() {
   document.body.appendChild(p);
   const cs = getComputedStyle(p), t = cs.paddingTop, b = cs.paddingBottom;
   document.body.removeChild(p);
-  return 'Schermo ' + window.innerWidth + '×' + window.innerHeight + ' (dispositivo ' + screen.width + '×' + screen.height + ') · margini sicuri alto ' + t + ' basso ' + b + ' · app v3';
+  return 'Schermo ' + window.innerWidth + '×' + window.innerHeight + ' (dispositivo ' + screen.width + '×' + screen.height + ') · margini sicuri alto ' + t + ' basso ' + b + ' · ' + (navigator.standalone ? 'app installata' : 'Safari') + ' · v4';
 }
 function openSettings() {
   const cf = D() ? (D().config || {}) : null;
