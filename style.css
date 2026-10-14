@@ -93,7 +93,7 @@ h4{margin:20px 0 4px;font:700 15px 'Chakra Petch',sans-serif}
 html.gap{--sa-b:0px}
 
 /* ===== animazioni ===== */
-:root{--dur:.8s;--blur:20px} /* durata del cambio schermata e intensità dello sfocato di movimento */
+:root{--dur:.52s;--blur:8px} /* durata del cambio schermata e intensità dello sfocato di movimento */
 @keyframes fade{from{opacity:0}to{opacity:1}}
 @keyframes up{from{transform:translateY(44px);opacity:0}to{transform:none;opacity:1}}
 @keyframes inr{from{transform:translateX(100%) scaleX(1.04);filter:blur(var(--blur))}to{transform:none;filter:blur(0px)}}
@@ -128,9 +128,16 @@ button.row:active{background:var(--cd)}
 .ok-p{stroke-dasharray:40;stroke-dashoffset:40;animation:draw .35s .42s ease-out forwards}
 @media (prefers-reduced-motion: reduce){html:not(.anim-on) *{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important}}
 
-/* PROVA TEMPORANEA: strisce colorate in basso (solo con la fascia attiva) per capire dove iOS permette di disegnare */
-.tstrip{display:none}
-html.gap .tstrip{display:block;position:fixed;z-index:99;pointer-events:none}
-#t1{left:0;width:33.34%;top:calc(100vh - 24px);height:24px;background:#e11d48}
-#t2{left:33.34%;width:33.33%;bottom:-24px;height:24px;background:#16a34a}
-#t3{left:66.67%;width:33.33%;top:100dvh;height:47px;background:#2563eb}
+/* incognito, occhio e animazioni dei pulsanti */
+.lb{display:flex;align-items:center;justify-content:space-between}
+.eye{width:36px;height:36px;border-radius:18px;background:rgba(255,255,255,.14);color:#fff;display:flex;align-items:center;justify-content:center;margin:-8px 0;transition:background-color .2s,transform .12s}
+.eye.on{background:var(--tl);color:var(--nv)}
+.eye:active,.ic:active{transform:scale(.86)}
+html.priv input[inputmode="decimal"]:not(:focus){filter:blur(7px)}
+html.priv .amt:not(:focus){filter:blur(10px)}
+@keyframes rot{to{transform:rotate(360deg)}}
+@keyframes rot90{0%{transform:rotate(0)}100%{transform:rotate(180deg) scale(1.15)}}
+.ic.spin svg{animation:rot .8s linear infinite}
+.ic.ok{background:var(--tl);color:var(--nv);animation:pop .3s cubic-bezier(.2,1.4,.4,1)}
+.ic.tap svg{animation:rot90 .3s cubic-bezier(.2,.8,.2,1)}
+.crow .chip.cnt{background:rgba(25,28,107,.92);color:#fff;box-shadow:none;pointer-events:none}

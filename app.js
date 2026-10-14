@@ -11,8 +11,16 @@ const dShort = s => { const a = (s || '').split('-'); return a.length < 3 ? '' :
 const dFull = s => { const a = (s || '').split('-'); return a.length < 3 ? '' : (+a[2]) + ' ' + MESI[+a[1] - 1] + ' ' + a[0]; };
 const eur = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' });
 const int = new Intl.NumberFormat('it-IT', { maximumFractionDigits: 0 });
-const money = n => eur.format(n || 0);
-const signed = n => (n >= 0 ? '+' : '−') + eur.format(Math.abs(n || 0));
+let PRIV = localStorage.getItem('fin_priv') === '1';
+const nfmt = n => PRIV ? '***' : new Intl.NumberFormat('it-IT', { maximumFractionDigits: 0 }).format(n);
+const money = n => PRIV ? '**** €' : eur.format(n || 0);
+const signed = n => PRIV ? '**** €' : (n >= 0 ? '+' : '−') + eur.format(Math.abs(n || 0));
+document.documentElement.classList.toggle('priv', PRIV);
+function setPriv(v) {
+  PRIV = !!v; localStorage.setItem('fin_priv', PRIV ? '1' : '0');
+  document.documentElement.classList.toggle('priv', PRIV);
+  render();
+}
 const parseNum = s => {
   s = String(s == null ? '' : s).trim().replace(/[^\d,.\-]/g, '');
   if (s.indexOf(',') > -1) s = s.replace(/\./g, '').replace(',', '.');
@@ -24,7 +32,10 @@ const svg = p => '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" st
 const I = {
   l: svg('<path d="M15 5l-7 7 7 7"/>'), r: svg('<path d="M9 5l7 7-7 7"/>'), x: svg('<path d="M6 6l12 12M18 6L6 18"/>'),
   set: svg('<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>'),
-  ref: svg('<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/>')
+  ref: svg('<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/>'),
+  ok: svg('<path d="M5 12l5 5 9-10"/>'),
+  eye: svg('<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>'),
+  eyeoff: svg('<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path d="M3 3l18 18"/>')
 };
 const C = { NV: '#191C6B', TL: '#2BBF9D', BL: '#5B72C2', PU: '#9A3AF2', OR: '#F2994A', PK: '#E8668B', GR: '#9CA0B8' };
 const TIPO_COL = { 'Liquidità': C.TL, 'Investimenti': C.BL, 'Previdenza': C.PU, 'Immobiliare': C.OR, 'TFR': C.GR, 'Passività': C.PK };
@@ -54,21 +65,25 @@ async function api(action, payload) {
 }
 let loading = false;
 async function load(silent) {
-  if (loading) return;
+  if (loading) return false;
   loading = true;
+  let ok = false;
   try {
     const j = await api('bootstrap');
     S.data = j; S.last = Date.now();
     try { localStorage.setItem(LS.cache, JSON.stringify(j)); } catch (e) { /* cache piena: ignora */ }
+    ok = true;
   } catch (e) { if (!silent) toast(e.message); }
   loading = false;
   render();
+  return ok;
 }
 let tt;
 function toast(t) { const e = $('#toast'); e.textContent = t; e.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => e.classList.remove('on'), 2800); }
 
 /* ===================== blocchi UI ===================== */
-const hd = (top, lb, big, sb, cls) => '<div class="hd"><div class="hd-top">' + top + '</div><div class="lb">' + lb + '</div><div class="big ' + (cls || '') + '">' + big + '</div><div class="sb">' + sb + '</div></div>';
+const eyeBtn = () => '<button class="eye ' + (PRIV ? 'on' : '') + '" data-a="priv" aria-pressed="' + PRIV + '" aria-label="' + (PRIV ? 'Mostra le cifre' : 'Nascondi le cifre') + '">' + (PRIV ? I.eyeoff : I.eye) + '</button>';
+const hd = (top, lb, big, sb, cls, eye) => '<div class="hd"><div class="hd-top">' + top + '</div><div class="lb"><span>' + lb + '</span>' + (eye ? eyeBtn() : '') + '</div><div class="big ' + (cls || '') + '">' + big + '</div><div class="sb">' + sb + '</div></div>';
 const sheet = h => '<div class="sheet">' + h + '</div>';
 const card = (h, x) => '<div class="card ' + (x || '') + '">' + h + '</div>';
 const row = (col, name, amt, sub) => '<div class="row"><i class="dot" style="background:' + col + '"></i><span class="rt">' + name + (sub ? '<small>' + sub + '</small>' : '') + '</span><b>' + amt + '</b></div>';
@@ -97,10 +112,10 @@ function renderHome() {
   const pct = bud > 0 ? Math.round((fi + va) / bud * 100) : 0, pctA = ba > 0 ? Math.round(an / ba * 100) : 0;
   const recent = D().movimenti.slice().sort((a, b) => (b.data + b.creato).localeCompare(a.data + a.creato)).slice(0, 6);
   const unc = D().movimenti.filter(m => m.stato === UNCAT).length;
-  const topbar = '<button class="ic" data-a="settings" aria-label="Impostazioni">' + I.set + '</button><div class="mnav"><button class="ic s" data-a="prevM" aria-label="Mese precedente">' + I.l + '</button><span>' + mLabel(ym).toUpperCase() + '</span><button class="ic s" data-a="nextM" aria-label="Mese successivo">' + I.r + '</button></div><button class="ic" data-a="refresh" aria-label="Aggiorna">' + I.ref + '</button>';
-  el.innerHTML = hd(topbar, 'Ancora disponibili', money(left), pct + '% del budget utilizzato · su ' + money(bud), left < 0 ? 'neg' : '') + sheet(
+  const topbar = '<button class="ic" data-a="settings" aria-label="Impostazioni">' + I.set + '</button><div class="mnav"><button class="ic s" data-a="prevM" aria-label="Mese precedente">' + I.l + '</button><span>' + mLabel(ym).toUpperCase() + '</span><button class="ic s" data-a="nextM" aria-label="Mese successivo">' + I.r + '</button></div><button class="ic' + (S.spin ? ' spin' : '') + (S.okRef ? ' ok' : '') + '" data-a="refresh" aria-label="Aggiorna">' + (S.okRef ? I.ok : I.ref) + '</button>';
+  el.innerHTML = hd(topbar, 'Ancora disponibili', money(left), pct + '% del budget utilizzato · su ' + money(bud), left < 0 ? 'neg' : '', true) + sheet(
     card('<div class="bar"><i style="width:' + pc(fi) + '%;background:' + C.BL + '"></i><i style="width:' + pc(va) + '%;background:' + C.TL + '"></i></div>' +
-      '<div class="leg"><span><span style="color:' + C.BL + '">●</span> Fisse ' + fmtN(fi) + '</span><span><span style="color:' + C.TL + '">●</span> Variabili ' + fmtN(va) + '</span><span>Budget ' + int.format(bud) + '</span></div>') +
+      '<div class="leg"><span><span style="color:' + C.BL + '">●</span> Fisse ' + fmtN(fi) + '</span><span><span style="color:' + C.TL + '">●</span> Variabili ' + fmtN(va) + '</span><span>Budget ' + nfmt(bud) + '</span></div>') +
     card('<div class="r2"><span>Spese annuali ' + yr + '</span><span>' + money(an) + ' / ' + money(ba) + '</span></div><div class="bar thin"><i style="width:' + (ba > 0 ? Math.min(an / ba * 100, 100) : 0) + '%;background:' + C.PU + '"></i></div><span class="mut">' + (ba - an >= 0 ? 'Restano ' + money(ba - an) : 'Oltre il budget di ' + money(an - ba)) + ' · utilizzato ' + pctA + '%</span>') +
     (unc ? '<button class="banner" data-a="listUncat">' + unc + (unc === 1 ? ' pagamento da categorizzare' : ' pagamenti da categorizzare') + ' ›</button>' : '') +
     '<div class="rowhead"><h3>Variabili per categoria</h3><b>' + money(va) + '</b></div>' + catList(grp('Variabile'), 'Nessuna spesa variabile in questo mese.') +
@@ -108,7 +123,7 @@ function renderHome() {
     '<div class="rowhead"><h3>Ultimi movimenti</h3><button class="link" data-a="listAll">Vedi tutti</button></div>' +
     (recent.length ? recent.map(mrow).join('') : '<p class="mut">Ancora nessun movimento.</p>'));
 }
-const fmtN = n => new Intl.NumberFormat('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n || 0);
+const fmtN = n => PRIV ? '****' : new Intl.NumberFormat('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n || 0);
 
 /* ===================== PATRIMONIO ===================== */
 function patData() {
@@ -127,7 +142,7 @@ function chart(dates, vals) {
   let s = '<svg viewBox="0 0 318 104" width="100%" role="img" aria-label="Andamento della liquidità negli snapshot">';
   if (n > 1) s += '<polyline points="' + pts + '" fill="none" stroke="' + C.PU + '" stroke-width="3" stroke-linejoin="round"/>';
   vals.forEach((x, i) => {
-    s += '<circle cx="' + X(i) + '" cy="' + Y(x) + '" r="5" fill="' + C.PU + '"/><text x="' + X(i) + '" y="' + (Y(x) - 11) + '" text-anchor="middle" font-size="11" fill="#646987">' + int.format(x) + '</text>' +
+    s += '<circle cx="' + X(i) + '" cy="' + Y(x) + '" r="5" fill="' + C.PU + '"/><text x="' + X(i) + '" y="' + (Y(x) - 11) + '" text-anchor="middle" font-size="11" fill="#646987">' + nfmt(x) + '</text>' +
       '<text x="' + X(i) + '" y="98" text-anchor="middle" font-size="11" fill="#646987">' + dShort(dates[i]) + '</text>';
   });
   return s + '</svg>';
@@ -145,7 +160,7 @@ function renderPat() {
   }
   const liqRow = P.conti.some(c => c.tipo === 'Liquidità') ? row(TIPO_COL['Liquidità'], 'Liquidità', money(last ? P.tip(last, ['Liquidità']) : 0)) : '';
   const others = P.conti.filter(c => c.tipo !== 'Liquidità').map(c => row(TIPO_COL[c.tipo] || C.GR, esc(c.nome), (c.tipo === 'Passività' ? '−' : '') + money(last ? P.v(c.nome, last) : 0))).join('');
-  el.innerHTML = hd('<span class="sp"></span><div class="ttl">PATRIMONIO</div><span class="sp"></span>', 'Patrimonio netto', money(last ? P.net(last) : 0), last ? 'Aggiornato al ' + dFull(last) : 'Nessuno snapshot') + sheet(
+  el.innerHTML = hd('<span class="sp"></span><div class="ttl">PATRIMONIO</div><span class="sp"></span>', 'Patrimonio netto', money(last ? P.net(last) : 0), last ? 'Aggiornato al ' + dFull(last) : 'Nessuno snapshot', '', true) + sheet(
     card('<h3 style="margin-top:0">Liquidità negli snapshot</h3>' + chart(shown, shown.map(d => P.tip(d, ['Liquidità'])))) + delta +
     liqRow + others +
     '<button class="btn" data-a="snap">Registra snapshot</button><p class="mut" style="text-align:center">Registralo il 1° di ogni mese, con tutti i conti.</p>');
@@ -174,7 +189,7 @@ function renderRic() {
   const el = $('#scr-ric');
   if (!D()) { el.innerHTML = noData('RICORRENTI'); return; }
   const list = D().ricorrenti.filter(r => r.attiva), tot = list.reduce((a, r) => a + r.importo, 0);
-  el.innerHTML = hd('<span class="sp"></span><div class="ttl">RICORRENTI</div><span class="sp"></span>', 'Totale ricorrenti al mese', money(tot), 'Generate in automatico') + sheet(
+  el.innerHTML = hd('<span class="sp"></span><div class="ttl">RICORRENTI</div><span class="sp"></span>', 'Totale ricorrenti al mese', money(tot), 'Generate in automatico', '', true) + sheet(
     (list.length ? list.map(r => '<button class="rec" data-a="editRic" data-id="' + esc(r.id) + '"><span>' + esc(r.nome) + '<small>Giorno ' + r.giorno + ' · ' + esc(catBy(r.categoria).gruppo || '') + '</small></span><b>' + money(r.importo) + '</b></button>').join('') : '<p class="mut">Nessuna ricorrente attiva.</p>') +
     '<button class="link" data-a="newRic">+ Aggiungi ricorrente</button>');
 }
@@ -334,13 +349,14 @@ function diag() {
   const i = insets(), vv = window.visualViewport ? Math.round(window.visualViewport.height) : '-';
   return 'Schermo ' + window.innerWidth + '×' + window.innerHeight + ' (dispositivo ' + screen.width + '×' + screen.height + ') · margini sicuri alto ' + i.t + 'px basso ' + i.b + 'px · ' +
     (navigator.standalone ? 'app installata' : 'Safari') + (document.documentElement.classList.contains('gap') ? ' · fascia in basso attiva' : ' · fascia in basso non attiva') +
-    ' · movimento ridotto ' + (reduceMotion() ? 'sì' : 'no') + ' · vh ' + vh('100vh') + '/' + vh('100lvh') + '/' + vh('100dvh') + ' · vv ' + vv + ' · v7 prova';
+    ' · movimento ridotto ' + (reduceMotion() ? 'sì' : 'no') + ' · vh ' + vh('100vh') + '/' + vh('100lvh') + '/' + vh('100dvh') + ' · vv ' + vv + ' · posizioni ' + (D() ? D().movimenti.filter(m => m.lat != null && m.lng != null).length : '-') + ' · v8';
 }
 function openSettings() {
   const cf = D() ? (D().config || {}) : null;
   openModal('<div class="mh"><span>Impostazioni</span><button class="ic d" data-a="closeModal" aria-label="Chiudi">' + I.x + '</button></div>' +
     '<label for="s-url">URL dello script (finisce con /exec)</label><input id="s-url" type="url" autocapitalize="off" autocorrect="off" value="' + esc(localStorage.getItem(LS.url) || '') + '">' +
     '<label for="s-key">Chiave segreta</label><input id="s-key" type="password" autocapitalize="off" autocorrect="off" value="' + esc(localStorage.getItem(LS.key) || '') + '">' +
+    '<h4>Privacy</h4><div class="frow"><span>Modalità incognito (nasconde le cifre)</span>' + sw('p-on', PRIV) + '</div>' +
     '<h4>Mappa</h4><label>Stile</label>' + seg(Object.keys(MAPSTYLES).map(k => [k, MAPSTYLES[k].n]), mapPref().style, 'mapStyle', 'v') +
     '<div class="frow"><span>Raggruppa i pallini vicini</span>' + sw('m-cl', mapPref().cluster) + '</div>' +
     '<h4>Animazioni</h4><div class="frow"><span>Mantieni le animazioni anche con “Riduci movimento”</span>' + sw('a-on', localStorage.getItem('fin_anim') === '1') + '</div><p class="mut">“Riduci movimento” di iOS: ' + (reduceMotion() ? 'attivo' : 'non attivo') + '</p>' +
@@ -401,6 +417,7 @@ function applyTiles() {
 function initMap() {
   if (MAP || !window.L) return;
   MAP = L.map('map', { zoomControl: false }).setView([41.9, 12.5], 6);
+  MAP.createPane('pts'); MAP.getPane('pts').style.zIndex = 650;
   applyTiles();
   MAP.on('click', () => { if (Date.now() - lastCard > 500) hideCard(); });
 }
@@ -420,6 +437,9 @@ function showCard(m) {
   c.hidden = false;
 }
 function drawMap(fit) {
+  try { drawMap0(fit); } catch (e) { toast('Mappa: ' + (e && e.message ? e.message : e)); }
+}
+function drawMap0(fit) {
   const ui = $('#mapui'); if (!ui) return;
   if (!window.L) { ui.innerHTML = '<div class="crow"><span class="chip on">Mappa non disponibile: serve la connessione</span></div>'; return; }
   initMap();
@@ -436,12 +456,13 @@ function drawMap(fit) {
     : L.featureGroup();
   const pts = geo.filter(m => inPeriod(m) && (!S.mcat || m.categoria === S.mcat));
   pts.forEach(m => {
-    const k = L.circleMarker([m.lat, m.lng], { radius: 11, color: '#fff', weight: 2.5, fillColor: catBy(m.categoria).colore, fillOpacity: 1, bubblingMouseEvents: false });
+    const k = L.circleMarker([m.lat, m.lng], { radius: 11, color: '#fff', weight: 2.5, fillColor: catBy(m.categoria).colore, fillOpacity: 1, bubblingMouseEvents: false, pane: 'pts' });
     k.on('click', () => { lastCard = Date.now(); showCard(m); }); GROUP.addLayer(k);
   });
+  ui.querySelector('.crow').insertAdjacentHTML('beforeend', '<span class="chip cnt">' + pts.length + (pts.length === 1 ? ' pagamento' : ' pagamenti') + '</span>');
   MAP.addLayer(GROUP);
   if (fit && pts.length) MAP.fitBounds(GROUP.getBounds().pad(0.2), { maxZoom: 16 });
-  if (!pts.length && fit) toast('Nessun pagamento con posizione in questo periodo');
+  if (!pts.length && fit) toast('Nessun pagamento con posizione in questo periodo (' + geo.length + ' con posizione in totale)');
 }
 
 /* ===================== navigazione ===================== */
@@ -470,7 +491,19 @@ function go(t) {
 }
 const A = {
   prevM() { S.month = addM(S.month, -1); renderHome(); }, nextM() { S.month = addM(S.month, 1); renderHome(); },
-  settings: openSettings, refresh() { load(false); }, closeModal: closeModal,
+  settings(b) {
+    if (b && b.classList) { b.classList.remove('tap'); void b.offsetWidth; b.classList.add('tap'); setTimeout(openSettings, 180); } else openSettings();
+  },
+  refresh() {
+    if (S.spin) return;
+    S.spin = 1; renderHome();
+    load(false).then(ok => {
+      S.spin = 0;
+      if (ok) { S.okRef = 1; renderHome(); toast('Dati aggiornati'); setTimeout(() => { S.okRef = 0; renderHome(); }, 1200); } else renderHome();
+    });
+  },
+  priv() { setPriv(!PRIV); },
+  closeModal: closeModal,
   listAll() { openList('month'); }, listUncat() { openList('uncat'); },
   editMov(b) { openEdit(b.dataset.id); }, mapEdit(b) { openEdit(b.dataset.id); }, mapClose: hideCard,
   newMov: openNew,
@@ -497,6 +530,7 @@ document.addEventListener('click', e => {
 document.addEventListener('change', e => {
   if (e.target.id === 'm-from') { S.mfrom = e.target.value; drawMap(true); }
   if (e.target.id === 'm-to') { S.mto = e.target.value; drawMap(true); }
+  if (e.target.id === 'p-on') setPriv(e.target.checked);
   if (e.target.id === 'a-on') { localStorage.setItem('fin_anim', e.target.checked ? '1' : '0'); document.documentElement.classList.toggle('anim-on', e.target.checked); }
   if (e.target.id === 'm-cl') { localStorage.setItem('fin_mcluster', e.target.checked ? '1' : '0'); if (MAP) drawMap(false); }
 });
