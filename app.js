@@ -208,12 +208,28 @@ async function endRic(id) {
 }
 
 /* ===================== MODALI ===================== */
+let modalTok = 0;
 function openModal(html, cls) {
   const m = $('#modal');
+  modalTok++; m.classList.remove('closing');
   m.innerHTML = '<div class="scrim" data-a="closeModal"></div><div class="msheet ' + (cls || '') + '" role="dialog" aria-modal="true">' + html + '</div>';
   m.classList.add('on');
 }
-function closeModal() { const m = $('#modal'); m.classList.remove('on'); m.innerHTML = ''; }
+function closeModal() {
+  const m = $('#modal'); if (!m.classList.contains('on')) return;
+  const tok = ++modalTok; m.classList.add('closing');
+  setTimeout(() => { if (tok === modalTok) { m.classList.remove('on', 'closing'); m.innerHTML = ''; } }, 190);
+}
+/* conferma animata dopo un salvataggio */
+function celebrate(title, sub) {
+  const el = document.createElement('div');
+  el.className = 'ok-pop'; el.setAttribute('role', 'status');
+  el.innerHTML = '<div class="ok-card"><svg viewBox="0 0 52 52" class="ok-svg" aria-hidden="true"><circle class="ok-c" cx="26" cy="26" r="23"/><path class="ok-p" d="M15 27l8 8 15-17"/></svg><b>' + esc(title) + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</div>';
+  document.body.appendChild(el);
+  if (navigator.vibrate) navigator.vibrate(15);
+  setTimeout(() => el.classList.add('out'), 1150);
+  setTimeout(() => el.remove(), 1450);
+}
 
 function openList(mode) {
   const ym = S.month;
@@ -250,7 +266,7 @@ async function saveNew(btn) {
   if (loc) { try { const p = await getPos(); lat = p.latitude; lng = p.longitude; } catch (e) { toast('Posizione non disponibile: salvo senza'); } }
   try {
     await api('addMovimento', { mov: { data: val('n-dt') || today(), importo: imp, categoria: NM.cat, esercente: es, note: nt, origine: 'Manuale', lat: lat, lng: lng, online: online } });
-    closeModal(); toast('Spesa salvata'); await load(true);
+    closeModal(); celebrate('Spesa salvata', money(imp) + ' · ' + NM.cat); await load(true);
   } catch (e) { toast(e.message); btn.disabled = false; btn.textContent = 'Salva spesa'; }
 }
 
@@ -430,9 +446,13 @@ function render() {
   renderHome(); renderPat(); renderRic();
   if (S.tab === 'map') drawMap(false);
 }
+const TABS = ['home', 'map', 'pat', 'ric'];
 function go(t) {
+  const dir = TABS.indexOf(t) - TABS.indexOf(S.tab);
   S.tab = t; hideCard();
   document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === 'scr-' + t));
+  const cur = document.getElementById('scr-' + t);
+  if (dir && cur) { cur.classList.remove('in-r', 'in-l'); void cur.offsetWidth; cur.classList.add(dir > 0 ? 'in-r' : 'in-l'); }
   document.querySelectorAll('#tabs [data-t]').forEach(b => b.classList.toggle('on', b.dataset.t === t));
   if (t === 'map') { drawMap(true); setTimeout(() => { if (MAP) MAP.invalidateSize(); }, 80); }
 }
@@ -467,6 +487,24 @@ document.addEventListener('change', e => {
   if (e.target.id === 'm-to') { S.mto = e.target.value; drawMap(true); }
   if (e.target.id === 'm-cl') { localStorage.setItem('fin_mcluster', e.target.checked ? '1' : '0'); if (MAP) drawMap(false); }
 });
+/* swipe: scorri a sinistra/destra per cambiare sezione (sulla mappa solo partendo dal bordo, per non disturbare lo spostamento della mappa) */
+let sw0 = null;
+document.addEventListener('touchstart', e => {
+  sw0 = null;
+  if (e.touches.length !== 1 || $('#modal').classList.contains('on')) return;
+  const t = e.touches[0];
+  if (e.target.closest && e.target.closest('input,select,textarea,.crow,.mapcard,.seg')) return;
+  if (S.tab === 'map' && !(t.clientX < 28 || t.clientX > window.innerWidth - 28)) return;
+  sw0 = { x: t.clientX, y: t.clientY, t: Date.now() };
+}, { passive: true });
+document.addEventListener('touchend', e => {
+  if (!sw0) return;
+  const t = e.changedTouches[0], dx = t.clientX - sw0.x, dy = t.clientY - sw0.y, dt = Date.now() - sw0.t;
+  sw0 = null;
+  if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.6 || dt > 700) return;
+  const n = TABS.indexOf(S.tab) + (dx < 0 ? 1 : -1);
+  if (n >= 0 && n < TABS.length) go(TABS[n]);
+}, { passive: true });
 document.addEventListener('visibilitychange', () => { fitViewport(); if (!document.hidden && localStorage.getItem(LS.key) && Date.now() - S.last > 60000) load(true); });
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 

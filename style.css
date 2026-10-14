@@ -91,3 +91,33 @@ h4{margin:20px 0 4px;font:700 15px 'Chakra Petch',sans-serif}
 @media (display-mode: standalone){:root{--ramp:30px}}
 /* Con barra di stato trasparente iOS lascia sotto la pagina una fascia pari al margine in alto: la usiamo come area sicura in basso */
 html.gap{--sa-b:0px}
+
+/* ===== animazioni ===== */
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes up{from{transform:translateY(44px);opacity:0}to{transform:none;opacity:1}}
+@keyframes inr{from{transform:translateX(38px);opacity:0}to{transform:none;opacity:1}}
+@keyframes inl{from{transform:translateX(-38px);opacity:0}to{transform:none;opacity:1}}
+@keyframes grow{from{transform:scaleX(0)}to{transform:none}}
+@keyframes pop{0%{transform:scale(.7);opacity:0}100%{transform:none;opacity:1}}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes tabpop{0%{transform:scale(.8)}60%{transform:scale(1.18)}100%{transform:none}}
+@keyframes fadeout{to{opacity:0}}
+.screen.in-r{animation:inr .28s cubic-bezier(.2,.8,.2,1)}
+.screen.in-l{animation:inl .28s cubic-bezier(.2,.8,.2,1)}
+#tabs button.on svg{animation:tabpop .3s}
+.bar i{transform-origin:left;animation:grow .7s cubic-bezier(.2,.8,.2,1) both}
+.scrim{animation:fade .2s}
+.msheet{animation:up .3s cubic-bezier(.2,.8,.2,1)}
+#modal.closing .scrim{opacity:0;transition:opacity .18s}
+#modal.closing .msheet{transform:translateY(34px);opacity:0;transition:transform .18s,opacity .18s}
+.btn,.chip,.rec,.row,.ic{transition:transform .12s,background-color .12s}
+.btn:active,.chip:active,.rec:active{transform:scale(.97)}
+button.row:active{background:var(--cd)}
+.ok-pop{position:fixed;inset:0;z-index:95;display:flex;align-items:center;justify-content:center;background:rgba(25,28,107,.35);pointer-events:none;animation:fade .18s}
+.ok-pop.out{animation:fadeout .3s forwards}
+.ok-card{background:#fff;border-radius:28px;padding:26px 34px 22px;text-align:center;box-shadow:0 12px 40px rgba(25,28,107,.35);animation:pop .38s cubic-bezier(.2,1.4,.4,1);min-width:210px}
+.ok-card b{display:block;font:700 18px 'Chakra Petch',sans-serif;margin-top:6px}
+.ok-svg{width:84px;height:84px;fill:none;stroke:#2BBF9D;stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round}
+.ok-c{stroke-dasharray:145;stroke-dashoffset:145;animation:draw .5s .05s ease-out forwards}
+.ok-p{stroke-dasharray:40;stroke-dashoffset:40;animation:draw .35s .42s ease-out forwards}
+@media (prefers-reduced-motion: reduce){*{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important}}
