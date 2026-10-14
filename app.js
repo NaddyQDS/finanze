@@ -463,7 +463,7 @@ function go(t) {
   if (dir && cur && prv) {
     cur.classList.remove('in-r', 'in-l'); void cur.offsetWidth; cur.classList.add(dir > 0 ? 'in-r' : 'in-l');
     prv.classList.add('leaving', dir > 0 ? 'out-l' : 'out-r');
-    setTimeout(() => { if (tok === goTok) { prv.classList.remove('leaving', 'out-l', 'out-r'); cur.classList.remove('in-r', 'in-l'); } }, 430);
+    setTimeout(() => { if (tok === goTok) { prv.classList.remove('leaving', 'out-l', 'out-r'); cur.classList.remove('in-r', 'in-l'); } }, 600);
   }
   document.querySelectorAll('#tabs [data-t]').forEach(b => b.classList.toggle('on', b.dataset.t === t));
   if (t === 'map') { drawMap(true); setTimeout(() => { if (MAP) MAP.invalidateSize(); }, 80); }

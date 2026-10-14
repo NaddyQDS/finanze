@@ -93,22 +93,23 @@ h4{margin:20px 0 4px;font:700 15px 'Chakra Petch',sans-serif}
 html.gap{--sa-b:0px}
 
 /* ===== animazioni ===== */
+:root{--dur:.52s;--blur:8px} /* durata del cambio schermata e intensità dello sfocato di movimento */
 @keyframes fade{from{opacity:0}to{opacity:1}}
 @keyframes up{from{transform:translateY(44px);opacity:0}to{transform:none;opacity:1}}
-@keyframes inr{from{transform:translateX(100%)}to{transform:none}}
-@keyframes inl{from{transform:translateX(-100%)}to{transform:none}}
-@keyframes outl{from{transform:none}to{transform:translateX(-100%)}}
-@keyframes outr{from{transform:none}to{transform:translateX(100%)}}
+@keyframes inr{from{transform:translateX(100%) scaleX(1.04);filter:blur(var(--blur))}to{transform:none;filter:blur(0px)}}
+@keyframes inl{from{transform:translateX(-100%) scaleX(1.04);filter:blur(var(--blur))}to{transform:none;filter:blur(0px)}}
+@keyframes outl{from{transform:none;filter:blur(0px)}to{transform:translateX(-100%) scaleX(1.04);filter:blur(var(--blur))}}
+@keyframes outr{from{transform:none;filter:blur(0px)}to{transform:translateX(100%) scaleX(1.04);filter:blur(var(--blur))}}
 @keyframes grow{from{transform:scaleX(0)}to{transform:none}}
 @keyframes pop{0%{transform:scale(.7);opacity:0}100%{transform:none;opacity:1}}
 @keyframes draw{to{stroke-dashoffset:0}}
 @keyframes tabpop{0%{transform:scale(.8)}60%{transform:scale(1.18)}100%{transform:none}}
 @keyframes fadeout{to{opacity:0}}
-.screen.in-r{animation:inr .4s cubic-bezier(.32,.72,0,1);z-index:2}
-.screen.in-l{animation:inl .4s cubic-bezier(.32,.72,0,1);z-index:2}
+.screen.in-r{animation:inr var(--dur) cubic-bezier(.32,.72,0,1);z-index:2;will-change:transform,filter}
+.screen.in-l{animation:inl var(--dur) cubic-bezier(.32,.72,0,1);z-index:2;will-change:transform,filter}
 .screen.leaving{display:flex;pointer-events:none;z-index:1}
-.screen.out-l{animation:outl .4s cubic-bezier(.32,.72,0,1) both}
-.screen.out-r{animation:outr .4s cubic-bezier(.32,.72,0,1) both}
+.screen.out-l{animation:outl var(--dur) cubic-bezier(.32,.72,0,1) both;will-change:transform,filter}
+.screen.out-r{animation:outr var(--dur) cubic-bezier(.32,.72,0,1) both;will-change:transform,filter}
 #tabs button.on svg{animation:tabpop .3s}
 .bar i{transform-origin:left;animation:grow .7s cubic-bezier(.2,.8,.2,1) both}
 .scrim{animation:fade .2s}
