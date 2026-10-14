@@ -310,6 +310,8 @@ async function delMov(id) {
 }
 
 /* ----- impostazioni ----- */
+const reduceMotion = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+if (localStorage.getItem('fin_anim') === '1') document.documentElement.classList.add('anim-on');
 function insets() {
   const p = document.createElement('div');
   p.style.cssText = 'position:absolute;visibility:hidden;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)';
@@ -332,7 +334,7 @@ function diag() {
   const i = insets(), vv = window.visualViewport ? Math.round(window.visualViewport.height) : '-';
   return 'Schermo ' + window.innerWidth + '×' + window.innerHeight + ' (dispositivo ' + screen.width + '×' + screen.height + ') · margini sicuri alto ' + i.t + 'px basso ' + i.b + 'px · ' +
     (navigator.standalone ? 'app installata' : 'Safari') + (document.documentElement.classList.contains('gap') ? ' · fascia in basso attiva' : ' · fascia in basso non attiva') +
-    ' · vh ' + vh('100vh') + '/' + vh('100lvh') + '/' + vh('100dvh') + ' · vv ' + vv + ' · v6';
+    ' · movimento ridotto ' + (reduceMotion() ? 'sì' : 'no') + ' · vh ' + vh('100vh') + '/' + vh('100lvh') + '/' + vh('100dvh') + ' · vv ' + vv + ' · v6';
 }
 function openSettings() {
   const cf = D() ? (D().config || {}) : null;
@@ -341,6 +343,7 @@ function openSettings() {
     '<label for="s-key">Chiave segreta</label><input id="s-key" type="password" autocapitalize="off" autocorrect="off" value="' + esc(localStorage.getItem(LS.key) || '') + '">' +
     '<h4>Mappa</h4><label>Stile</label>' + seg(Object.keys(MAPSTYLES).map(k => [k, MAPSTYLES[k].n]), mapPref().style, 'mapStyle', 'v') +
     '<div class="frow"><span>Raggruppa i pallini vicini</span>' + sw('m-cl', mapPref().cluster) + '</div>' +
+    '<h4>Animazioni</h4><div class="frow"><span>Mantieni le animazioni anche con “Riduci movimento”</span>' + sw('a-on', localStorage.getItem('fin_anim') === '1') + '</div><p class="mut">“Riduci movimento” di iOS: ' + (reduceMotion() ? 'attivo' : 'non attivo') + '</p>' +
     (cf ? '<h4>Budget e obiettivi</h4>' + CFG_KEYS.map((k, i) => '<label for="c' + i + '">' + k + ' (€)</label><input id="c' + i + '" data-p="' + k + '" inputmode="decimal" value="' + dec(cf[k] == null ? '' : cf[k]) + '">').join('') +
       '<h4>Nuova regola esercente</h4><label for="rg-p">Quando l’esercente contiene</label><input id="rg-p" autocapitalize="off"><label for="rg-c">Categoria</label><select id="rg-c">' +
       D().categorie.filter(c => c.attiva && c.nome !== UNCAT).map(c => '<option>' + esc(c.nome) + '</option>').join('') + '</select><label for="rg-n">Nota (facoltativa)</label><input id="rg-n"><div class="frow" style="margin-top:8px"><span>Esercente online</span>' + sw('rg-o', false) + '</div><button class="btn ghost" data-a="saveRule">Aggiungi regola</button><p class="mut">Regole attive: ' + (D().regole.length ? D().regole.map(r => esc(r.parola) + ' → ' + esc(r.categoria)).join(' · ') : 'nessuna') + '</p>' : '') +
@@ -447,12 +450,21 @@ function render() {
   if (S.tab === 'map') drawMap(false);
 }
 const TABS = ['home', 'map', 'pat', 'ric'];
+let goTok = 0;
 function go(t) {
-  const dir = TABS.indexOf(t) - TABS.indexOf(S.tab);
+  const old = S.tab, dir = TABS.indexOf(t) - TABS.indexOf(old), tok = ++goTok;
   S.tab = t; hideCard();
-  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === 'scr-' + t));
-  const cur = document.getElementById('scr-' + t);
-  if (dir && cur) { cur.classList.remove('in-r', 'in-l'); void cur.offsetWidth; cur.classList.add(dir > 0 ? 'in-r' : 'in-l'); }
+  document.querySelectorAll('.screen').forEach(s => {
+    const on = s.id === 'scr-' + t;
+    s.classList.toggle('on', on); s.classList.remove('leaving', 'out-l', 'out-r');
+    if (!on) s.classList.remove('in-r', 'in-l');
+  });
+  const cur = document.getElementById('scr-' + t), prv = document.getElementById('scr-' + old);
+  if (dir && cur && prv) {
+    cur.classList.remove('in-r', 'in-l'); void cur.offsetWidth; cur.classList.add(dir > 0 ? 'in-r' : 'in-l');
+    prv.classList.add('leaving', dir > 0 ? 'out-l' : 'out-r');
+    setTimeout(() => { if (tok === goTok) { prv.classList.remove('leaving', 'out-l', 'out-r'); cur.classList.remove('in-r', 'in-l'); } }, 430);
+  }
   document.querySelectorAll('#tabs [data-t]').forEach(b => b.classList.toggle('on', b.dataset.t === t));
   if (t === 'map') { drawMap(true); setTimeout(() => { if (MAP) MAP.invalidateSize(); }, 80); }
 }
@@ -485,6 +497,7 @@ document.addEventListener('click', e => {
 document.addEventListener('change', e => {
   if (e.target.id === 'm-from') { S.mfrom = e.target.value; drawMap(true); }
   if (e.target.id === 'm-to') { S.mto = e.target.value; drawMap(true); }
+  if (e.target.id === 'a-on') { localStorage.setItem('fin_anim', e.target.checked ? '1' : '0'); document.documentElement.classList.toggle('anim-on', e.target.checked); }
   if (e.target.id === 'm-cl') { localStorage.setItem('fin_mcluster', e.target.checked ? '1' : '0'); if (MAP) drawMap(false); }
 });
 /* swipe: scorri a sinistra/destra per cambiare sezione (sulla mappa solo partendo dal bordo, per non disturbare lo spostamento della mappa) */
