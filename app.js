@@ -334,7 +334,7 @@ function diag() {
   const i = insets(), vv = window.visualViewport ? Math.round(window.visualViewport.height) : '-';
   return 'Schermo ' + window.innerWidth + '×' + window.innerHeight + ' (dispositivo ' + screen.width + '×' + screen.height + ') · margini sicuri alto ' + i.t + 'px basso ' + i.b + 'px · ' +
     (navigator.standalone ? 'app installata' : 'Safari') + (document.documentElement.classList.contains('gap') ? ' · fascia in basso attiva' : ' · fascia in basso non attiva') +
-    ' · movimento ridotto ' + (reduceMotion() ? 'sì' : 'no') + ' · vh ' + vh('100vh') + '/' + vh('100lvh') + '/' + vh('100dvh') + ' · vv ' + vv + ' · v6';
+    ' · movimento ridotto ' + (reduceMotion() ? 'sì' : 'no') + ' · vh ' + vh('100vh') + '/' + vh('100lvh') + '/' + vh('100dvh') + ' · vv ' + vv + ' · v7 prova';
 }
 function openSettings() {
   const cf = D() ? (D().config || {}) : null;

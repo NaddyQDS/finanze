@@ -127,3 +127,10 @@ button.row:active{background:var(--cd)}
 .ok-c{stroke-dasharray:145;stroke-dashoffset:145;animation:draw .5s .05s ease-out forwards}
 .ok-p{stroke-dasharray:40;stroke-dashoffset:40;animation:draw .35s .42s ease-out forwards}
 @media (prefers-reduced-motion: reduce){html:not(.anim-on) *{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important}}
+
+/* PROVA TEMPORANEA: strisce colorate in basso (solo con la fascia attiva) per capire dove iOS permette di disegnare */
+.tstrip{display:none}
+html.gap .tstrip{display:block;position:fixed;z-index:99;pointer-events:none}
+#t1{left:0;width:33.34%;top:calc(100vh - 24px);height:24px;background:#e11d48}
+#t2{left:33.34%;width:33.33%;bottom:-24px;height:24px;background:#16a34a}
+#t3{left:66.67%;width:33.33%;top:100dvh;height:47px;background:#2563eb}
