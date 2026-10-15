@@ -116,7 +116,7 @@ function renderHome() {
   el.innerHTML = hd(topbar, 'Ancora disponibili', money(left), pct + '% del budget utilizzato · su ' + money(bud), left < 0 ? 'neg' : '', true) + sheet(
     card('<div class="bar"><i style="width:' + pc(fi) + '%;background:' + C.BL + '"></i><i style="width:' + pc(va) + '%;background:' + C.TL + '"></i></div>' +
       '<div class="leg"><span><span style="color:' + C.BL + '">●</span> Fisse ' + fmtN(fi) + '</span><span><span style="color:' + C.TL + '">●</span> Variabili ' + fmtN(va) + '</span><span>Budget ' + nfmt(bud) + '</span></div>') +
-    card('<div class="r2"><span>Spese annuali ' + yr + '</span><span>' + money(an) + ' / ' + money(ba) + '</span></div><div class="bar thin"><i style="width:' + (ba > 0 ? Math.min(an / ba * 100, 100) : 0) + '%;background:' + C.PU + '"></i></div><span class="mut">' + (ba - an >= 0 ? 'Restano ' + money(ba - an) : 'Oltre il budget di ' + money(an - ba)) + ' · utilizzato ' + pctA + '%</span>') +
+    '<button class="card link" data-a="annual" data-y="' + yr + '" aria-label="Dettaglio delle spese annuali"><div class="r2"><span>Spese annuali ' + yr + '</span><span>' + money(an) + ' / ' + money(ba) + '</span></div><div class="bar thin"><i style="width:' + (ba > 0 ? Math.min(an / ba * 100, 100) : 0) + '%;background:' + C.PU + '"></i></div><div class="r2" style="font-weight:400"><span class="mut">' + (ba - an >= 0 ? 'Restano ' + money(ba - an) : 'Oltre il budget di ' + money(an - ba)) + ' · utilizzato ' + pctA + '%</span><span style="color:var(--pu);font-weight:700;font-size:13px;white-space:nowrap">Dettaglio ›</span></div></button>' +
     (unc ? '<button class="banner" data-a="listUncat">' + unc + (unc === 1 ? ' pagamento da categorizzare' : ' pagamenti da categorizzare') + ' ›</button>' : '') +
     '<div class="rowhead"><h3>Variabili per categoria</h3><b>' + money(va) + '</b></div>' + catList(grp('Variabile'), 'Nessuna spesa variabile in questo mese.') +
     '<div class="rowhead"><h3>Spese fisse</h3><b>' + money(fi) + '</b></div>' + catList(grp('Fissa'), 'Nessuna spesa fissa in questo mese.') +
@@ -246,6 +246,34 @@ function celebrate(title, sub) {
   setTimeout(() => el.remove(), 1450);
 }
 
+/* ----- riepilogo spese annuali ----- */
+const ANN_COL = [C.PU, C.TL, C.OR, C.PK, C.BL, '#4CC9F0', '#F5C84B', C.GR];
+function annualHTML() {
+  const y = S.annYear, ba = cfg('Budget annuale');
+  const ms = spese().filter(m => m.gruppo === 'Annuale' && m.data.slice(0, 4) === y);
+  const cats = D().categorie.filter(c => c.gruppo === 'Annuale' && c.nome !== UNCAT);
+  ms.forEach(m => { if (!cats.some(c => c.nome === m.categoria)) cats.push({ nome: m.categoria, gruppo: 'Annuale', attiva: true }); });
+  const rows = cats.map((c, i) => {
+    const list = ms.filter(m => m.categoria === c.nome).sort((p, q) => (q.data + q.creato).localeCompare(p.data + p.creato));
+    return { nome: c.nome, attiva: c.attiva, list: list, tot: list.reduce((s, m) => s + m.importo, 0), col: ANN_COL[i % ANN_COL.length] };
+  }).filter(r => r.attiva || r.list.length).sort((p, q) => q.tot - p.tot || p.nome.localeCompare(q.nome));
+  const total = rows.reduce((s, r) => s + r.tot, 0), pct = ba > 0 ? Math.round(total / ba * 100) : 0;
+  const top = '<button class="ic" data-a="closeModal" aria-label="Indietro">' + I.l + '</button><div class="mnav"><button class="ic s" data-a="annPrev" aria-label="Anno precedente">' + I.l + '</button><span>' + y + '</span><button class="ic s" data-a="annNext" aria-label="Anno successivo">' + I.r + '</button></div><span class="sp"></span>';
+  const items = rows.map(r => {
+    const share = total > 0 ? Math.round(r.tot / total * 100) : 0;
+    return '<div class="annitem"><button class="annrow" data-a="annCat" aria-expanded="false"><i class="dot" style="background:' + r.col + '"></i><span class="rt">' + esc(r.nome) + '<small>' + r.list.length + (r.list.length === 1 ? ' spesa' : ' spese') + ' · ' + share + '% del totale</small></span><b>' + money(r.tot) + '</b><span class="chev">›</span></button>' +
+      '<div class="annbar"><i style="width:' + share + '%;background:' + r.col + '"></i></div>' +
+      '<div class="annlist" hidden>' + (r.list.length ? r.list.map(mrow).join('') : '<p class="mut">Nessuna spesa registrata.</p>') + '</div></div>';
+  }).join('');
+  return hd(top, 'Speso nel ' + y, money(total), pct + '% di ' + money(ba) + ' · ' + (ba - total >= 0 ? 'restano ' + money(ba - total) : 'oltre il budget di ' + money(total - ba)), total > ba ? 'neg' : '') +
+    sheet('<div class="card"><div class="bar thin"><i style="width:' + Math.min(pct, 100) + '%;background:' + C.PU + '"></i></div><div class="r2" style="font-weight:400"><span class="mut">Budget annuale</span><b>' + money(ba) + '</b></div></div>' +
+      '<h3 style="margin-top:4px">Per categoria</h3>' + (items || '<p class="mut">Nessuna categoria annuale: aggiungila nel foglio Categorie con gruppo “Annuale”.</p>'));
+}
+function openAnnual(y) { S.annYear = y || today().slice(0, 4); openModal(annualHTML(), 'full'); }
+function annShift(k) {
+  S.annYear = String(+S.annYear + k);
+  const m = $('#modal .msheet'); if (m) m.innerHTML = annualHTML();
+}
 function openList(mode) {
   const ym = S.month;
   const arr = (mode === 'uncat' ? D().movimenti.filter(m => m.stato === UNCAT) : D().movimenti.filter(m => m.data.slice(0, 7) === ym))
@@ -505,6 +533,11 @@ const A = {
   priv() { setPriv(!PRIV); },
   closeModal: closeModal,
   listAll() { openList('month'); }, listUncat() { openList('uncat'); },
+  annual(b) { openAnnual(b.dataset.y); }, annPrev() { annShift(-1); }, annNext() { annShift(1); },
+  annCat(b) {
+    const l = b.parentNode.querySelector('.annlist'); l.hidden = !l.hidden;
+    b.setAttribute('aria-expanded', String(!l.hidden)); b.classList.toggle('open', !l.hidden);
+  },
   editMov(b) { openEdit(b.dataset.id); }, mapEdit(b) { openEdit(b.dataset.id); }, mapClose: hideCard,
   newMov: openNew,
   setGroup(b) {

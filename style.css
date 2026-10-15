@@ -141,3 +141,15 @@ html.priv .amt:not(:focus){filter:blur(10px)}
 .ic.ok{background:var(--tl);color:var(--nv);animation:pop .3s cubic-bezier(.2,1.4,.4,1)}
 .ic.tap svg{animation:rot90 .3s cubic-bezier(.2,.8,.2,1)}
 .crow .chip.cnt{background:rgba(25,28,107,.92);color:#fff;box-shadow:none;pointer-events:none;display:flex;align-items:center}
+
+/* riepilogo spese annuali */
+.card.link{display:block;width:100%;text-align:left;transition:transform .12s}
+.card.link:active{transform:scale(.98)}
+.annitem{margin-bottom:8px}
+.annrow{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:10px 0 4px;font-size:14px}
+.annrow .chev{color:var(--mu);font-size:22px;line-height:1;transition:transform .2s}
+.annrow.open .chev{transform:rotate(90deg)}
+.annbar{height:6px;border-radius:3px;background:#DADDF0;margin:2px 0 4px 22px;overflow:hidden}
+.annbar i{display:block;height:100%;border-radius:3px;transform-origin:left;animation:grow .7s cubic-bezier(.2,.8,.2,1) both}
+.annlist{margin:4px 0 8px 22px;padding-left:10px;border-left:2px solid var(--ln)}
+.annlist[hidden]{display:none}
