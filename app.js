@@ -416,7 +416,7 @@ function applyTiles() {
 }
 function initMap() {
   if (MAP || !window.L) return;
-  MAP = L.map('map', { zoomControl: false }).setView([41.9, 12.5], 6);
+  MAP = L.map('map', { zoomControl: false, minZoom: 3, maxZoom: 19 }).setView([41.9, 12.5], 6);
   MAP.createPane('pts'); MAP.getPane('pts').style.zIndex = 650;
   applyTiles();
   MAP.on('click', () => { if (Date.now() - lastCard > 500) hideCard(); });
