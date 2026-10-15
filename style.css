@@ -19,20 +19,21 @@ button{border:0;background:none;padding:0;cursor:pointer}
 .big{position:relative;z-index:1;font:700 38px/1.15 'Chakra Petch',sans-serif}
 .big.neg{color:#FF9DB5}
 .sb{position:relative;z-index:1;font-size:12px;color:var(--li);min-height:15px}
-.sheet{flex:1;min-height:0;overflow-y:auto;margin-top:-28px;position:relative;z-index:2;background:#fff;border-radius:32px 32px 0 0;padding:20px 20px calc(96px + var(--sa-b))}
-.card{background:var(--cd);border-radius:18px;padding:16px;margin-bottom:12px}
+.sheet{flex:1;min-height:0;overflow-y:auto;margin-top:-28px;position:relative;z-index:2;background:#fff;border-radius:32px 32px 0 0;padding:26px 20px calc(96px + var(--sa-b))}
+.card{background:var(--cd);border-radius:20px;padding:20px;margin-bottom:16px}
 .r2{display:flex;justify-content:space-between;font-size:14px;font-weight:700;gap:8px}
-.bar{display:flex;height:10px;border-radius:5px;overflow:hidden;background:#DADDF0;margin:10px 0 8px}
+.bar{display:flex;height:10px;border-radius:5px;overflow:hidden;background:#DADDF0;margin:14px 0 12px}
 .bar.thin{height:8px}.bar i{display:block;height:100%}
 .leg{display:flex;justify-content:space-between;font-size:12px;color:var(--mu)}
 .mut{color:var(--mu);font-size:13px}small{display:block;font-size:12px;color:var(--mu);font-weight:400}
-h3{font:700 16px 'Chakra Petch',sans-serif;margin:16px 0 4px}
-.rowhead{display:flex;justify-content:space-between;align-items:baseline}
+h3{font:700 16px 'Chakra Petch',sans-serif;margin:26px 0 6px}
+.rowhead{display:flex;justify-content:space-between;align-items:baseline;margin-top:30px}
+.rowhead h3{margin:0 0 6px}
 .link{color:var(--pu);font-weight:700;font-size:14px;height:44px;padding:0 4px}
-.row{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:9px 0;border-top:1px solid var(--ln);font-size:14px}
+.row{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:13px 0;border-top:1px solid var(--ln);font-size:14px}
 .rt{flex:1;min-width:0}.rt small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dot{width:10px;height:10px;border-radius:5px;flex:none}
-.banner{width:100%;text-align:left;background:#FFF3E3;color:#8A4B00;border-radius:14px;padding:14px 16px;font-weight:700;font-size:14px;margin-bottom:12px}
+.banner{width:100%;text-align:left;background:#FFF3E3;color:#8A4B00;border-radius:14px;padding:14px 16px;font-weight:700;font-size:14px;margin-bottom:18px}
 .btn{width:100%;height:52px;border-radius:26px;background:var(--tl);color:var(--nv);font-weight:800;font-size:16px;margin-top:10px}
 .btn.ghost{background:var(--lv);color:var(--tx)}.btn.warn{background:none;color:var(--mu);font-weight:600;font-size:14px;height:44px}
 .btn:disabled{opacity:.6}
@@ -143,8 +144,10 @@ html.priv .amt:not(:focus){filter:blur(10px)}
 .crow .chip.cnt{background:rgba(25,28,107,.92);color:#fff;box-shadow:none;pointer-events:none;display:flex;align-items:center}
 
 /* riepilogo spese annuali */
-.card.link{display:block;width:100%;text-align:left;transition:transform .12s}
-.card.link:active{transform:scale(.98)}
+.card.cardbtn{display:block;width:100%;text-align:left;transition:transform .12s}
+.card.cardbtn:active{transform:scale(.98)}
+.card.ann .bar{height:10px;margin:18px 0 16px}
+.card.ann .r2:last-child{align-items:center}
 .annitem{margin-bottom:8px}
 .annrow{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:10px 0 4px;font-size:14px}
 .annrow .chev{color:var(--mu);font-size:22px;line-height:1;transition:transform .2s}
