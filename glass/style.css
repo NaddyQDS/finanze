@@ -196,9 +196,9 @@ html{background:var(--nv)}
 .annlist{border-color:var(--ln)}
 /* ===== Home a riquadri ===== */
 .hm{padding-top:calc(var(--sa-t) + var(--ramp) + 10px)}
-.hm>*{margin-bottom:12px}.hm .card{margin:0}
+.hm>*{margin-bottom:14px}.g2 .card{margin:0}
 .tb{display:flex;align-items:center;justify-content:space-between}
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .hm .cardbtn{display:block;width:100%;text-align:left}
 .ch{display:flex;justify-content:space-between;align-items:center}.ch h3,.hm h3{margin:0 0 4px;font-size:15px}
 .nm{font:700 30px/1.15 'Chakra Petch',sans-serif}
@@ -225,3 +225,5 @@ html{background:var(--nv)}
 .tl:active span{transform:scale(.92)}.tl.on span{background:var(--tl);color:#fff}
 .db{width:44px;text-align:center;border-radius:12px;background:var(--lv);padding:6px 0;flex:none}
 .db b{display:block;font:700 16px/1 'Chakra Petch',sans-serif}.db small{font-size:10px;text-transform:uppercase}
+
+.leg span:first-child,.leg span:last-child{font-weight:600}

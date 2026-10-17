@@ -133,15 +133,15 @@ function renderHome() {
   const wk = []; for (let i = 6; i >= 0; i--) { const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i), k = d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate()); wk.push([['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'][d.getDay()], spese().filter(m => m.data === k).reduce((a, m) => a + m.importo, 0)]); }
   const wm = Math.max.apply(null, wk.map(x => x[1]).concat(1)), wi = wk.reduce((b, x, i) => x[1] > wk[b][1] ? i : b, 0);
   const nx = D().ricorrenti.filter(r => r.attiva).map(r => { const mo = r.giorno < now.getDate() ? now.getMonth() + 1 : now.getMonth(); return { r: r, d: new Date(now.getFullYear(), mo, Math.min(r.giorno, new Date(now.getFullYear(), mo + 1, 0).getDate())) }; }).sort((a, b) => a.d - b.d).slice(0, 3);
-  const P = patData(), ld = P.dates[P.dates.length - 1], pd = P.dates[P.dates.length - 2], dn = pd ? P.net(ld) - P.net(pd) : 0;
+  const P = patData(), ld = P.dates[P.dates.length - 1], pd = P.dates[P.dates.length - 2], E = ld ? (today() > ld ? today() : ld) : null, dn = pd ? P.net(E) - P.net(pd) : 0;
   const T = (x, ic, l, on) => '<button class="tl' + (on ? ' on' : '') + '" ' + x + '><span>' + ic + '</span>' + l + '</button>';
   const topbar = '<div class="tb"><button class="ic" data-a="settings" aria-label="Impostazioni">' + I.set + '</button><div class="mnav"><button class="ic s" data-a="prevM" aria-label="Mese precedente">' + I.l + '</button><span>' + mLabel(ym).toUpperCase() + '</span><button class="ic s" data-a="nextM" aria-label="Mese successivo">' + I.r + '</button></div><button class="ic' + (S.spin ? ' spin' : '') + (S.okRef ? ' ok' : '') + '" data-a="refresh" aria-label="Aggiorna">' + (S.okRef ? I.ok : I.ref) + '</button></div>';
   el.innerHTML = sheet(topbar +
     '<div class="card gr"><div class="r2"><div><small>' + hi + ',</small><div class="nm">' + esc(NAME) + '</div><small>' + money(fi + va) + ' spesi · ' + mLabel(ym) + '</small></div><span class="pill">' + p2(h) + ':' + p2(now.getMinutes()) + '</span></div>' + wave(cum, 'w1') + '</div>' +
     '<div class="card"><div class="bd"><div><small>Ancora disponibili</small><div class="big2' + (left < 0 ? ' neg' : '') + '">' + money(left) + '</div><small>su ' + money(bud) + perDay + '</small></div>' + ring(pct, 'rg1', '', pct + '%') + '</div>' +
-    '<div class="bar"><i style="width:' + pc(fi) + '%;background:' + C.BL + '"></i><i style="width:' + pc(va) + '%;background:' + C.PU + '"></i></div><div class="leg"><span><span style="color:' + C.BL + '">●</span> Fisse ' + fmtN(fi) + '</span><span><span style="color:' + C.PU + '">●</span> Variabili ' + fmtN(va) + '</span></div></div>' +
+    '<div class="bar"><i style="width:' + pc(fi) + '%;background:#38BDF8"></i><i style="width:' + pc(va) + '%;background:#FF9F43"></i></div><div class="leg"><span><span style="color:#38BDF8">●</span> Fisse ' + fmtN(fi) + '</span><span><span style="color:#FF9F43">●</span> Variabili ' + fmtN(va) + '</span></div></div>' +
     '<div class="g2"><button class="card cardbtn" data-a="annual" data-y="' + yr + '"><div class="bd"><div><small>Spese annuali ' + yr + '</small><div class="big2 s">' + money(an) + '</div><small>su ' + money(ba) + '</small></div></div><div style="margin-top:10px">' + ring(pctA, 'rg2', 'sm', pctA + '%') + '</div></button>' +
-    '<button class="card cardbtn" data-t="pat"><small>Patrimonio netto</small><div class="big2 s">' + money(ld ? P.net(ld) : 0) + '</div>' + wave(P.dates.slice(-6).map(d => P.net(d)), 'w2') + (pd ? '<small class="' + (dn >= 0 ? 'pos' : 'neg') + '">' + signed(dn) + ' dal ' + dShort(pd) + '</small>' : '') + '</button></div>' +
+    '<button class="card cardbtn" data-t="pat"><small>Patrimonio netto</small><div class="big2 s">' + money(ld ? P.net(E) : 0) + '</div>' + wave(P.dates.slice(-6).map(d => P.net(d)).concat(ld && E > ld ? [P.net(E)] : []), 'w2') + (pd ? '<small class="' + (dn >= 0 ? 'pos' : 'neg') + '">' + signed(dn) + ' dal ' + dShort(pd) + '</small>' : '') + '</button></div>' +
     (unc ? '<button class="banner" data-a="listUncat">' + unc + (unc === 1 ? ' pagamento da categorizzare' : ' pagamenti da categorizzare') + ' ›</button>' : '') +
     '<div class="card"><div class="ch"><h3>Ultimi movimenti</h3><button class="link" data-a="listAll">Vedi tutti</button></div>' + (recent.length ? recent.map(mrow).join('') : '<p class="mut">Ancora nessun movimento.</p>') + '</div>' +
     '<div class="card"><div class="ch"><h3>Ultimi 7 giorni</h3><small>' + money(wk.reduce((a, x) => a + x[1], 0)) + '</small></div><div class="wk">' + wk.map((x, i) => '<div class="wc' + (i === wi && x[1] > 0 ? ' hi' : '') + '"><div class="wb"><em style="bottom:calc(' + x[1] / wm * 100 + '% + 6px)">' + (PRIV ? '***' : int.format(x[1]) + ' €') + '</em><i style="height:' + Math.max(x[1] / wm * 100, 5) + '%"></i></div><span>' + x[0] + '</span></div>').join('') + '</div></div>' +
@@ -157,10 +157,12 @@ const fmtN = n => PRIV ? '****' : new Intl.NumberFormat('it-IT', { minimumFracti
 function patData() {
   const snaps = D().snapshot, dates = Array.from(new Set(snaps.map(s => s.data))).sort();
   const conti = D().conti.filter(c => c.attivo || snaps.some(s => s.voce === c.nome));
-  const v = (voce, d) => { let b = null; snaps.forEach(s => { if (s.voce === voce && s.data <= d && (!b || s.data > b.data)) b = s; }); return b ? b.valore : 0; };
+  const mut = conti.find(c => c.tipo === 'Passività' && /mutuo/i.test(c.nome));
+  const paid = (a, z) => D().movimenti.filter(m => /mutuo/i.test(m.categoria) && m.tipo !== 'Entrata' && m.data > a && m.data <= z).reduce((x, m) => x + m.importo, 0);
+  const v = (voce, d) => { let b = null; snaps.forEach(s => { if (s.voce === voce && s.data <= d && (!b || s.data > b.data)) b = s; }); if (!b) return 0; return mut && voce === mut.nome ? Math.max(b.valore - paid(b.data, d), 0) : b.valore; };
   const tip = (d, types) => conti.filter(c => types.indexOf(c.tipo) > -1).reduce((a, c) => a + v(c.nome, d), 0);
   const net = d => conti.reduce((a, c) => a + (c.tipo === 'Passività' ? -1 : 1) * v(c.nome, d), 0);
-  return { dates: dates, conti: conti, v: v, tip: tip, net: net };
+  return { dates: dates, conti: conti, v: v, tip: tip, net: net, mortgage: mut ? mut.nome : null };
 }
 function chart(dates, vals) {
   const n = vals.length; if (!n) return '<p class="mut">Nessuno snapshot registrato.</p>';
@@ -178,7 +180,7 @@ function chart(dates, vals) {
 function renderPat() {
   const el = $('#scr-pat');
   if (!D()) { el.innerHTML = noData('PATRIMONIO'); return; }
-  const P = patData(), last = P.dates[P.dates.length - 1], prev = P.dates[P.dates.length - 2];
+  const P = patData(), last = P.dates[P.dates.length - 1], prev = P.dates[P.dates.length - 2], E = last ? (today() > last ? today() : last) : null;
   const shown = P.dates.slice(-6);
   const sav = ['Liquidità', 'Investimenti', 'Previdenza'];
   let delta = '';
@@ -187,17 +189,17 @@ function renderPat() {
     delta = card('<div class="r2"><span>Variazione dal ' + dShort(prev) + '</span><span class="' + (dl >= 0 ? 'pos' : 'neg') + '">' + signed(dl) + '</span></div><small>Liquidità + investimenti + fondo pensione. Obiettivo mensile: ' + money(cfg('Obiettivo risparmio mensile')) + '</small>');
   }
   const liqRow = P.conti.some(c => c.tipo === 'Liquidità') ? row(TIPO_COL['Liquidità'], 'Liquidità', money(last ? P.tip(last, ['Liquidità']) : 0)) : '';
-  const others = P.conti.filter(c => c.tipo !== 'Liquidità').map(c => row(TIPO_COL[c.tipo] || C.GR, esc(c.nome), (c.tipo === 'Passività' ? '−' : '') + money(last ? P.v(c.nome, last) : 0))).join('');
-  el.innerHTML = hd('<span class="sp"></span><div class="ttl">PATRIMONIO</div><span class="sp"></span>', 'Patrimonio netto', money(last ? P.net(last) : 0), last ? 'Aggiornato al ' + dFull(last) : 'Nessuno snapshot', '', true) + sheet(
+  const others = P.conti.filter(c => c.tipo !== 'Liquidità').map(c => row(TIPO_COL[c.tipo] || C.GR, esc(c.nome), (c.tipo === 'Passività' ? '−' : '') + money(last ? P.v(c.nome, E) : 0))).join('');
+  el.innerHTML = hd('<span class="sp"></span><div class="ttl">PATRIMONIO</div><span class="sp"></span>', 'Patrimonio netto', money(last ? P.net(E) : 0), last ? 'Aggiornato al ' + dFull(last) + (P.mortgage && E > last ? ' · mutuo al ' + dFull(E) : '') : 'Nessuno snapshot', '', true) + sheet(
     card('<h3 style="margin-top:0">Liquidità negli snapshot</h3>' + chart(shown, shown.map(d => P.tip(d, ['Liquidità'])))) + delta +
     liqRow + others +
     '<button class="btn" data-a="snap">Registra snapshot</button><p class="mut" style="text-align:center">Registralo il 1° di ogni mese, con tutti i conti.</p>');
 }
 function openSnap() {
   const P = patData(), last = P.dates[P.dates.length - 1] || today();
-  const fields = P.conti.map((c, i) => '<label for="sn' + i + '">' + esc(c.nome) + ' <span class="mut">· ' + esc(c.tipo) + '</span></label><input id="sn' + i + '" data-voce="' + esc(c.nome) + '" inputmode="decimal" value="' + dec(P.v(c.nome, last)) + '">').join('');
+  const fields = P.conti.map((c, i) => '<label for="sn' + i + '">' + esc(c.nome) + ' <span class="mut">· ' + esc(c.tipo) + '</span></label><input id="sn' + i + '" data-voce="' + esc(c.nome) + '" inputmode="decimal" value="' + dec(P.v(c.nome, today())) + '">').join('');
   openModal('<div class="mh"><span>Nuovo snapshot</span><button class="ic d" data-a="closeModal" aria-label="Chiudi">' + I.x + '</button></div><label for="sn-d">Data</label><input id="sn-d" type="date" value="' + today() + '">' + fields +
-    '<p class="mut">Le passività (come il mutuo) vanno inserite con importo positivo.</p><button class="btn" data-a="saveSnap">Salva snapshot</button>', 'tall');
+    '<p class="mut">' + (P.mortgage ? 'Il mutuo è precompilato: ultimo valore meno le rate pagate da allora. ' : '') + 'Le passività (come il mutuo) vanno inserite con importo positivo.</p><button class="btn" data-a="saveSnap">Salva snapshot</button>', 'tall');
 }
 async function saveSnap(btn) {
   const valori = {};
