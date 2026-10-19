@@ -146,7 +146,7 @@ function renderHome() {
     '<div class="card"><div class="ch"><h3>Ultimi movimenti</h3><button class="link" data-a="listAll">Vedi tutti</button></div>' + (recent.length ? recent.map(mrow).join('') : '<p class="mut">Ancora nessun movimento.</p>') + '</div>' +
     '<div class="card"><div class="ch"><h3>Ultimi 7 giorni</h3><small>' + money(wk.reduce((a, x) => a + x[1], 0)) + '</small></div><div class="wk">' + wk.map((x, i) => '<div class="wc' + (i === wi && x[1] > 0 ? ' hi' : '') + '"><div class="wb"><em style="bottom:calc(' + x[1] / wm * 100 + '% + 6px)">' + (PRIV ? '***' : int.format(x[1]) + ' €') + '</em><i style="height:' + Math.max(x[1] / wm * 100, 5) + '%"></i></div><span>' + x[0] + '</span></div>').join('') + '</div></div>' +
     '<div class="card"><h3>Scorciatoie</h3><div class="tg">' + T('data-t="map"', svg('<path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>'), 'Mappa') + T('data-t="pat"', svg('<rect x="4" y="12" width="4" height="8" rx="1"/><rect x="10" y="4" width="4" height="16" rx="1"/><rect x="16" y="9" width="4" height="11" rx="1"/>'), 'Patrimonio') + T('data-t="ric"', svg('<path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/>'), 'Ricorrenti') +
-    T('data-a="theme"', svg('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/>'), 'Tema') + T('data-a="priv"', PRIV ? I.eyeoff : I.eye, 'Incognito', PRIV) + T('data-a="settings"', I.set, 'Impostazioni') + '</div></div>' +
+    T('data-a="theme"', svg('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/>'), 'Tema') + T('data-a="priv"', PRIV ? I.eyeoff : I.eye, 'Incognito', PRIV) + T('data-a="exportSum"', svg('<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>'), 'Riepilogo') + '</div></div>' +
     '<div class="card"><h3>Prossime ricorrenti</h3>' + (nx.length ? nx.map(n => '<div class="row"><div class="db"><b>' + n.d.getDate() + '</b><small>' + MESI[n.d.getMonth()].slice(0, 3) + '</small></div><span class="rt">' + esc(n.r.nome) + '<small>' + esc(catBy(n.r.categoria).gruppo || '') + '</small></span><b>' + money(n.r.importo) + '</b></div>').join('') : '<p class="mut">Nessuna ricorrente attiva.</p>') + '</div>' +
     '<div class="card"><div class="ch"><h3>Variabili per categoria</h3><b>' + money(va) + '</b></div>' + catList(grp('Variabile'), 'Nessuna spesa variabile in questo mese.') + '</div>' +
     '<div class="card"><div class="ch"><h3>Spese fisse</h3><b>' + money(fi) + '</b></div>' + catList(grp('Fissa'), 'Nessuna spesa fissa in questo mese.') + '</div>').replace('class="sheet"', 'class="sheet hm"');
@@ -547,6 +547,38 @@ function go(t) {
   document.querySelectorAll('#tabs [data-t]').forEach(b => b.classList.toggle('on', b.dataset.t === t));
   if (t === 'map') { drawMap(true); setTimeout(() => { if (MAP) MAP.invalidateSize(); }, 80); }
 }
+function buildSummary() {
+  const ym = S.month, yr = ym.slice(0, 4), all = spese(), E = n => eur.format(n || 0), t = today();
+  const sumBy = (arr, f) => arr.filter(f).reduce((a, m) => a + m.importo, 0);
+  const bud = cfg('Budget mensile'), ba = cfg('Budget annuale'), now = new Date();
+  const isCur = ym === t.slice(0, 7), dim = new Date(+yr, +ym.slice(5), 0).getDate(), dl = dim - now.getDate() + 1;
+  const ms = all.filter(m => m.data.slice(0, 7) === ym);
+  const fi = sumBy(ms, m => m.gruppo === 'Fissa'), va = sumBy(ms, m => m.gruppo === 'Variabile'), left = bud - fi - va;
+  const cats = (arr, g) => { const o = {}; arr.filter(m => m.gruppo === g).forEach(m => { o[m.categoria] = (o[m.categoria] || 0) + m.importo; }); return o; };
+  const pk = new Date(+yr, +ym.slice(5) - 2, 1), pym = pk.getFullYear() + '-' + p2(pk.getMonth() + 1);
+  const pv = cats(all.filter(m => m.data.slice(0, 7) === pym), 'Variabile'), cv = cats(ms, 'Variabile'), cf = cats(ms, 'Fissa');
+  const an = sumBy(all, m => m.gruppo === 'Annuale' && m.data.slice(0, 4) === yr);
+  const L = [];
+  L.push('RIEPILOGO SPESE – ' + mLabel(ym) + (isCur ? ' (dati al ' + dShort(t) + ', ' + dl + ' giorni alla fine del mese)' : ''));
+  L.push('Budget mensile ' + E(bud) + ' · Fisse ' + E(fi) + ' · Variabili ' + E(va) + ' · Disponibile ' + E(left) + (bud > 0 ? ' (' + Math.round((fi + va) / bud * 100) + '% usato)' : ''));
+  L.push('Spese annuali ' + yr + ': ' + E(an) + ' su ' + E(ba) + (ba > 0 ? ' (' + Math.round(an / ba * 100) + '%)' : ''));
+  L.push('', 'ANDAMENTO ULTIMI 6 MESI');
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(+yr, +ym.slice(5) - 1 - i, 1), k = d.getFullYear() + '-' + p2(d.getMonth() + 1), a = all.filter(m => m.data.slice(0, 7) === k);
+    L.push(mLabel(k) + ': Fisse ' + E(sumBy(a, m => m.gruppo === 'Fissa')) + ' · Variabili ' + E(sumBy(a, m => m.gruppo === 'Variabile')) + ' · Annuali ' + E(sumBy(a, m => m.gruppo === 'Annuale')));
+  }
+  L.push('', 'VARIABILI PER CATEGORIA (mese corrente vs ' + mLabel(pym) + ')');
+  Object.keys(Object.assign({}, cv, pv)).sort((a, b) => (cv[b] || 0) - (cv[a] || 0)).forEach(k => L.push(k + ': ' + E(cv[k]) + ' (prima ' + E(pv[k]) + ')'));
+  L.push('', 'FISSE: ' + (Object.keys(cf).map(k => k + ' ' + E(cf[k])).join(' · ') || 'nessuna'));
+  const top = ms.filter(m => m.gruppo === 'Variabile').sort((a, b) => b.importo - a.importo).slice(0, 8);
+  L.push('', 'SPESE VARIABILI PIÙ GRANDI');
+  top.forEach(m => L.push(dShort(m.data) + ' · ' + (m.esercente || m.note || m.categoria) + ' · ' + m.categoria + ' · ' + E(m.importo)));
+  L.push('', 'Analizza l\'andamento delle mie spese: cosa cresce o cala, eventuali anomalie, come sto rispetto al budget, e dammi 3 consigli concreti.');
+  return L.join('\n');
+}
+function showSummary(t) {
+  openModal('<div class="mh"><span>Riepilogo da copiare</span><button class="ic d" data-a="closeModal" aria-label="Chiudi">' + I.x + '</button></div><textarea id="ex-t" class="extxt" readonly>' + esc(t) + '</textarea><button class="btn" data-a="copyTxt">Copia</button>');
+}
 const A = {
   prevM() { S.month = addM(S.month, -1); renderHome(); }, nextM() { S.month = addM(S.month, 1); renderHome(); },
   settings(b) {
@@ -563,6 +595,8 @@ const A = {
   priv() { setPriv(!PRIV); },
   theme() { const t = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light'; document.documentElement.dataset.theme = t; localStorage.setItem('fin2_theme', t); $('meta[name=theme-color]').content = t === 'light' ? '#EAF0FB' : '#070A18'; if (MAP) applyTiles(); render(); },
   closeModal: closeModal,
+  exportSum() { const t = buildSummary(), fb = () => showSummary(t); if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(() => toast('Riepilogo copiato: incollalo in chat con Claude'), fb); else fb(); },
+  copyTxt() { const e = $('#ex-t'); e.focus(); e.select(); e.setSelectionRange(0, 99999); let ok = false; try { ok = document.execCommand('copy'); } catch (x) { } toast(ok ? 'Riepilogo copiato' : 'Tieni premuto sul testo per copiarlo'); },
   listAll() { openList('month'); }, listUncat() { openList('uncat'); },
   annual(b) { openAnnual(b.dataset.y); }, annPrev() { annShift(-1); }, annNext() { annShift(1); },
   annCat(b) {

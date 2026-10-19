@@ -227,3 +227,5 @@ html{background:var(--nv)}
 .db b{display:block;font:700 16px/1 Kanit,sans-serif}.db small{font-size:10px;text-transform:uppercase}
 
 .leg span:first-child,.leg span:last-child{font-weight:600}
+
+.extxt{width:100%;height:46vh;margin:10px 0;padding:12px;border-radius:14px;border:1px solid var(--ln);background:var(--lv);color:var(--tx);font:12px/1.5 ui-monospace,Menlo,monospace;resize:none}
