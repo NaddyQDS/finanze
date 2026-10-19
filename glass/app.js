@@ -489,7 +489,7 @@ function inPeriod(m) {
 function hideCard() { const c = $('#mapcard'); if (c) c.hidden = true; }
 function showCard(m) {
   const c = $('#mapcard'), cat = catBy(m.categoria);
-  c.innerHTML = '<div class="r2" style="font-size:18px;font-family:\'Chakra Petch\',sans-serif"><span>' + esc(m.esercente || m.note || m.categoria) + '</span><span>' + money(m.importo) + '</span></div><small><span style="color:' + cat.colore + '">●</span> ' + esc(m.categoria) + ' · ' + dFull(m.data) + ' · ' + esc(m.origine || '') + '</small>' +
+  c.innerHTML = '<div class="r2" style="font-size:18px;font-family:Kanit,sans-serif"><span>' + esc(m.esercente || m.note || m.categoria) + '</span><span>' + money(m.importo) + '</span></div><small><span style="color:' + cat.colore + '">●</span> ' + esc(m.categoria) + ' · ' + dFull(m.data) + ' · ' + esc(m.origine || '') + '</small>' +
     (m.note && m.note !== m.esercente ? '<small>Nota: ' + esc(m.note) + '</small>' : '') +
     '<div class="btns"><button class="btn" data-a="mapEdit" data-id="' + esc(m.id) + '">Modifica</button><button class="btn ghost" data-a="mapClose">Chiudi</button></div>';
   c.hidden = false;
